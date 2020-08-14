@@ -1,8 +1,0 @@
-bookdown::gitbook:
-  css: style.css
-  config:
-    toc:
-      before: |
-        <li><a href="./">Geodiversity data</a></li>
-
-
