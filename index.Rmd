@@ -1,0 +1,22 @@
+---
+title: "Extracting grid cell coverages of geospatial layers "
+author: "Tim P. Lenters"
+date: "`r Sys.Date()`"
+site: bookdown::bookdown_site()
+output: bookdown::gitbook
+---
+# Introduction
+
+This Bookdown document explains how to extract the proportion of coverage by each class for a specified grid. These scripts are useful for large (global) layers as most calculations run in parallel. This is done by integrating SAGA and GDAL console commands in each script. Input spatial files can be either vector or grid layers. This analysis is done for five different geospatial layers. 
+
+This document consists of several chapters:
+
+* How to install SAGA and GDAL
+* Making a Goode Homolosine grid
+* Calculating coverages for:
+  * Global Lithological map (GLiM)
+  * Global River Classification (GloRiC)
+  * Global Lakes and Wetlands Database (GLWD)
+  * Global terrain classification (Iwahashi et al., 2018)
+  * World Reference Base Soil Groups (SoilGrids)
+* Aggregating all value tables

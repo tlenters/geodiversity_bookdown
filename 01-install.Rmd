@@ -1,0 +1,37 @@
+# Install SAGA and GDAL
+
+This chapter shows how to install SAGA and GDAL on Windows for parallel computing through R.
+
+## GDAL
+This software tool is used for handling spatial data and is especially useful for exchanging/converting spatial data. To install GDAL on Windows go to http://www.gisinternals.com/release.php, click ```release-1900-x64-gdal-2-4-4-mapserver-7-4-3``` and download ```gdal-204-1900-x64-core.msi```. Follow installation steps via GDAL-installer. 
+GDAL can be called from the command line in Rstudio. They can be linked by running this script on both Windows and Unix-systems:
+
+
+```{r GDAL, eval=FALSE, include=TRUE}
+if(.Platform$OS.type == "windows"){
+  gdal.dir <- shortPathName("C:/Program files/GDAL")
+  gdal_translate <- paste0(gdal.dir, "/gdal_translate.exe")
+  gdalwarp <- paste0(gdal.dir, "/gdalwarp.exe") 
+} else {
+  gdal_translate = "gdal_translate"
+  gdalwarp = "gdalwarp"
+}
+system(paste(gdalwarp, "--help")) #If done correctly, this will give help menu
+```
+
+Other functions and their directory can be added in the ‘if’-statement to use them. These can be found in the GDAL folder in Program Files. 
+
+## SAGA
+This program provides comprehensive GIS geoprocessing software with over 600 functions. To install, go to https://sourceforge.net/projects/saga-gis/ and download SAGA GIS by clicking the green button. Follow installation steps via SAGA-installer (7.6.3 is preferred).
+SAGA GIS can also be called from the command line in Rstudio. They can be linked by running this script on both Windows and Unix-systems:
+
+```{r SAGA, eval=FALSE, include=TRUE}
+if(Sys.info()['sysname']=="Windows"){
+  saga_cmd = "C:/#specify location here/saga_cmd.exe"
+} else {
+  saga_cmd = "saga_cmd"
+}
+system(paste(saga_cmd, "-v")) #If installed correctly, this will give version
+```
+
+Available functions and their command line arguments for your specific SAGA GIS version can be found here: http://www.saga-gis.org/saga_tool_doc/index.html.

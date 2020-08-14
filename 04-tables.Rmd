@@ -1,0 +1,36 @@
+# Aggregating value tables
+
+After all calculations are done, the separate tables for all different layers can be combined into one large table. 
+
+```{r full, eval=FALSE, include=TRUE}
+library(data.table)
+
+setwd("D:/people/Tim/global/")
+
+value_tables <- list.files(path="output", pattern = "value_table.csv$", full.names = TRUE)
+full_table <- data.table()
+
+for (i in 1:length(value_tables)){
+  table <- fread(value_tables[i], data.table = TRUE)
+  full_table <- rbind(full_table, table)
+}
+
+fwrite(full_table, "output/full_value_table.csv",row.names = FALSE, sep=",", dec = ".")
+```
+
+The resulting table can be used in Marxan and looks like this:
+
+cell_ID |	feature	| proportion | area_km2
+--- | --- | --- | ---
+3810092 |	GLWD_1	| 0.00368 |	0.368
+3806588 |	GLWD_1	| 0.00272	| 0.272
+3247606	| GLWD_1	| 0.08608	| 8.608
+3243741	| GLWD_1	| 0.05472	| 5.472
+3423450	| GLWD_1	| 0.07504	| 7.504
+3419671	| GLWD_1	| 0.00816	| 0.816
+3442310	| GLWD_1	| 0.0064	| 0.64
+3374182	| GLWD_1	| 0.023392 | 23.392
+3377986 | GLWD_1	| 0.00368	| 0.368
+3374183	| GLWD_1	| 0.017728 | 17.728
+
+In the feature column each dataset tag (i.e. GLWD) corresponds with one of the five datasets. The number or code signifies one class which can be looked up in the corresponding 'legend' table.

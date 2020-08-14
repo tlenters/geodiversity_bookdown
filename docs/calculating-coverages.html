@@ -1,0 +1,652 @@
+<!DOCTYPE html>
+<html >
+
+<head>
+
+  <meta charset="UTF-8">
+  <meta http-equiv="X-UA-Compatible" content="IE=edge">
+  <title>Chapter 4 Calculating coverages | Extracting grid cell coverages of geospatial layers</title>
+  <meta name="description" content="Chapter 4 Calculating coverages | Extracting grid cell coverages of geospatial layers">
+  <meta name="generator" content="bookdown  and GitBook 2.6.7">
+
+  <meta property="og:title" content="Chapter 4 Calculating coverages | Extracting grid cell coverages of geospatial layers" />
+  <meta property="og:type" content="book" />
+  
+  
+  
+  
+
+  <meta name="twitter:card" content="summary" />
+  <meta name="twitter:title" content="Chapter 4 Calculating coverages | Extracting grid cell coverages of geospatial layers" />
+  
+  
+  
+
+<meta name="author" content="Tim P. Lenters">
+
+
+<meta name="date" content="2020-08-14">
+
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-status-bar-style" content="black">
+  
+  
+<link rel="prev" href="making-goode-homolosine-grid.html">
+<link rel="next" href="aggregating-value-tables.html">
+<script src="libs/jquery-2.2.3/jquery.min.js"></script>
+<link href="libs/gitbook-2.6.7/css/style.css" rel="stylesheet" />
+<link href="libs/gitbook-2.6.7/css/plugin-table.css" rel="stylesheet" />
+<link href="libs/gitbook-2.6.7/css/plugin-bookdown.css" rel="stylesheet" />
+<link href="libs/gitbook-2.6.7/css/plugin-highlight.css" rel="stylesheet" />
+<link href="libs/gitbook-2.6.7/css/plugin-search.css" rel="stylesheet" />
+<link href="libs/gitbook-2.6.7/css/plugin-fontsettings.css" rel="stylesheet" />
+
+
+
+
+
+
+
+
+
+<style type="text/css">
+a.sourceLine { display: inline-block; line-height: 1.25; }
+a.sourceLine { pointer-events: none; color: inherit; text-decoration: inherit; }
+a.sourceLine:empty { height: 1.2em; }
+.sourceCode { overflow: visible; }
+code.sourceCode { white-space: pre; position: relative; }
+div.sourceCode { margin: 1em 0; }
+pre.sourceCode { margin: 0; }
+@media screen {
+div.sourceCode { overflow: auto; }
+}
+@media print {
+code.sourceCode { white-space: pre-wrap; }
+a.sourceLine { text-indent: -1em; padding-left: 1em; }
+}
+pre.numberSource a.sourceLine
+  { position: relative; left: -4em; }
+pre.numberSource a.sourceLine::before
+  { content: attr(data-line-number);
+    position: relative; left: -1em; text-align: right; vertical-align: baseline;
+    border: none; pointer-events: all; display: inline-block;
+    -webkit-touch-callout: none; -webkit-user-select: none;
+    -khtml-user-select: none; -moz-user-select: none;
+    -ms-user-select: none; user-select: none;
+    padding: 0 4px; width: 4em;
+    color: #aaaaaa;
+  }
+pre.numberSource { margin-left: 3em; border-left: 1px solid #aaaaaa;  padding-left: 4px; }
+div.sourceCode
+  {  }
+@media screen {
+a.sourceLine::before { text-decoration: underline; }
+}
+code span.al { color: #ff0000; font-weight: bold; } /* Alert */
+code span.an { color: #60a0b0; font-weight: bold; font-style: italic; } /* Annotation */
+code span.at { color: #7d9029; } /* Attribute */
+code span.bn { color: #40a070; } /* BaseN */
+code span.bu { } /* BuiltIn */
+code span.cf { color: #007020; font-weight: bold; } /* ControlFlow */
+code span.ch { color: #4070a0; } /* Char */
+code span.cn { color: #880000; } /* Constant */
+code span.co { color: #60a0b0; font-style: italic; } /* Comment */
+code span.cv { color: #60a0b0; font-weight: bold; font-style: italic; } /* CommentVar */
+code span.do { color: #ba2121; font-style: italic; } /* Documentation */
+code span.dt { color: #902000; } /* DataType */
+code span.dv { color: #40a070; } /* DecVal */
+code span.er { color: #ff0000; font-weight: bold; } /* Error */
+code span.ex { } /* Extension */
+code span.fl { color: #40a070; } /* Float */
+code span.fu { color: #06287e; } /* Function */
+code span.im { } /* Import */
+code span.in { color: #60a0b0; font-weight: bold; font-style: italic; } /* Information */
+code span.kw { color: #007020; font-weight: bold; } /* Keyword */
+code span.op { color: #666666; } /* Operator */
+code span.ot { color: #007020; } /* Other */
+code span.pp { color: #bc7a00; } /* Preprocessor */
+code span.sc { color: #4070a0; } /* SpecialChar */
+code span.ss { color: #bb6688; } /* SpecialString */
+code span.st { color: #4070a0; } /* String */
+code span.va { color: #19177c; } /* Variable */
+code span.vs { color: #4070a0; } /* VerbatimString */
+code span.wa { color: #60a0b0; font-weight: bold; font-style: italic; } /* Warning */
+</style>
+
+<link rel="stylesheet" href="style.css" type="text/css" />
+</head>
+
+<body>
+
+
+
+  <div class="book without-animation with-summary font-size-2 font-family-1" data-basepath=".">
+
+    <div class="book-summary">
+      <nav role="navigation">
+
+<ul class="summary">
+<li><a href="./">Geodiversity data</a></li>
+
+<li class="divider"></li>
+<li class="chapter" data-level="1" data-path="index.html"><a href="index.html"><i class="fa fa-check"></i><b>1</b> Introduction</a></li>
+<li class="chapter" data-level="2" data-path="install-saga-and-gdal.html"><a href="install-saga-and-gdal.html"><i class="fa fa-check"></i><b>2</b> Install SAGA and GDAL</a><ul>
+<li class="chapter" data-level="2.1" data-path="install-saga-and-gdal.html"><a href="install-saga-and-gdal.html#gdal"><i class="fa fa-check"></i><b>2.1</b> GDAL</a></li>
+<li class="chapter" data-level="2.2" data-path="install-saga-and-gdal.html"><a href="install-saga-and-gdal.html#saga"><i class="fa fa-check"></i><b>2.2</b> SAGA</a></li>
+</ul></li>
+<li class="chapter" data-level="3" data-path="making-goode-homolosine-grid.html"><a href="making-goode-homolosine-grid.html"><i class="fa fa-check"></i><b>3</b> Making Goode Homolosine grid</a><ul>
+<li class="chapter" data-level="3.1" data-path="making-goode-homolosine-grid.html"><a href="making-goode-homolosine-grid.html#r-script"><i class="fa fa-check"></i><b>3.1</b> R-script</a></li>
+</ul></li>
+<li class="chapter" data-level="4" data-path="calculating-coverages.html"><a href="calculating-coverages.html"><i class="fa fa-check"></i><b>4</b> Calculating coverages</a><ul>
+<li class="chapter" data-level="4.1" data-path="calculating-coverages.html"><a href="calculating-coverages.html#global-lithological-map-glim"><i class="fa fa-check"></i><b>4.1</b> Global Lithological map (GLiM)</a></li>
+<li class="chapter" data-level="4.2" data-path="calculating-coverages.html"><a href="calculating-coverages.html#global-river-classification-gloric"><i class="fa fa-check"></i><b>4.2</b> Global River Classification (GloRiC)</a></li>
+<li class="chapter" data-level="4.3" data-path="calculating-coverages.html"><a href="calculating-coverages.html#global-lakes-and-wetlands-database-glwd"><i class="fa fa-check"></i><b>4.3</b> Global Lakes and Wetlands Database (GLWD)</a></li>
+<li class="chapter" data-level="4.4" data-path="calculating-coverages.html"><a href="calculating-coverages.html#global-terrain-classification-iwahashi-et-al.-2018"><i class="fa fa-check"></i><b>4.4</b> Global terrain classification (Iwahashi et al., 2018)</a></li>
+<li class="chapter" data-level="4.5" data-path="calculating-coverages.html"><a href="calculating-coverages.html#world-reference-base-soil-groups-soilgrids"><i class="fa fa-check"></i><b>4.5</b> World Reference Base Soil Groups (SoilGrids)</a></li>
+</ul></li>
+<li class="chapter" data-level="5" data-path="aggregating-value-tables.html"><a href="aggregating-value-tables.html"><i class="fa fa-check"></i><b>5</b> Aggregating value tables</a></li>
+</ul>
+
+      </nav>
+    </div>
+
+    <div class="book-body">
+      <div class="body-inner">
+        <div class="book-header" role="navigation">
+          <h1>
+            <i class="fa fa-circle-o-notch fa-spin"></i><a href="./">Extracting grid cell coverages of geospatial layers</a>
+          </h1>
+        </div>
+
+        <div class="page-wrapper" tabindex="-1" role="main">
+          <div class="page-inner">
+
+            <section class="normal" id="section-">
+<div id="calculating-coverages" class="section level1">
+<h1><span class="header-section-number">Chapter 4</span> Calculating coverages</h1>
+<p>In this chapter, coverages of five different spatial layers are calculated. The grid maded in the previous chapter is used as a template.</p>
+<div id="global-lithological-map-glim" class="section level2">
+<h2><span class="header-section-number">4.1</span> Global Lithological map (GLiM)</h2>
+<p>Packages are automatically installed (if needed) and loaded from <code>library</code>.</p>
+<pre class="sourceCode r"><code class="sourceCode r">list.of.packages &lt;-<span class="st"> </span><span class="kw">c</span>(<span class="st">&quot;rgdal&quot;</span>, <span class="st">&quot;GSIF&quot;</span>, <span class="st">&quot;raster&quot;</span>, <span class="st">&quot;dplyr&quot;</span>, <span class="st">&quot;spdplyr&quot;</span>, <span class="st">&quot;data.table&quot;</span>, <span class="st">&quot;reshape2&quot;</span>, <span class="st">&quot;progress&quot;</span>, <span class="st">&quot;tictoc&quot;</span>)
+new.packages &lt;-<span class="st"> </span>list.of.packages[<span class="op">!</span>(list.of.packages <span class="op">%in%</span><span class="st"> </span><span class="kw">installed.packages</span>()[,<span class="st">&quot;Package&quot;</span>])]
+<span class="cf">if</span>(<span class="kw">length</span>(new.packages)) <span class="kw">install.packages</span>(new.packages, <span class="dt">dependencies =</span> <span class="ot">TRUE</span>)
+<span class="cf">if</span>(<span class="op">!</span>(<span class="st">&quot;dtraster&quot;</span> <span class="op">%in%</span><span class="st"> </span><span class="kw">installed.packages</span>()[,<span class="st">&quot;Package&quot;</span>])) remotes<span class="op">::</span><span class="kw">install_github</span>(<span class="st">&quot;ldemaz/dtraster&quot;</span>)
+
+<span class="kw">library</span>(rgdal)
+<span class="kw">library</span>(GSIF)
+<span class="kw">library</span>(raster)
+<span class="kw">library</span>(dplyr)
+<span class="kw">library</span>(spdplyr)
+<span class="kw">library</span>(data.table)
+<span class="kw">library</span>(dtraster)
+<span class="kw">library</span>(reshape2)
+<span class="kw">library</span>(progress)
+<span class="kw">library</span>(tictoc)</code></pre>
+<p>A timer is set for the total calculation time and for each section seperately.</p>
+<pre class="sourceCode r"><code class="sourceCode r"><span class="kw">tic.clearlog</span>()
+<span class="kw">tic</span>(<span class="st">&quot;Total time&quot;</span>)</code></pre>
+<p><code>saga_cmd</code> is linked to the R console.</p>
+<pre class="sourceCode r"><code class="sourceCode r"><span class="cf">if</span>(<span class="kw">Sys.info</span>()[<span class="st">&#39;sysname&#39;</span>]<span class="op">==</span><span class="st">&quot;Windows&quot;</span>){
+  saga_cmd =<span class="st"> &quot;C:/Users/11026685/Downloads/saga-7.6.3_x64/saga-7.6.3_x64/saga_cmd.exe&quot;</span>
+} <span class="cf">else</span> {
+  saga_cmd =<span class="st"> &quot;saga_cmd&quot;</span>
+}
+<span class="kw">system</span>(<span class="kw">paste</span>(saga_cmd, <span class="st">&quot;-v&quot;</span>)) <span class="co">#&quot;SAGA Version: 7.6.3 (64 bit)&quot; if succesful</span></code></pre>
+<p>Working directory is set.</p>
+<pre class="sourceCode r"><code class="sourceCode r"><span class="kw">setwd</span>(<span class="st">&quot;D:/people/Tim/global&quot;</span>)</code></pre>
+<p>The shapefile is reprojected to Goode Homolosine.</p>
+<pre class="sourceCode r"><code class="sourceCode r"><span class="kw">tic</span>(<span class="st">&quot;Reproject to Goode Homolosine&quot;</span>)
+<span class="kw">system</span>(<span class="kw">paste0</span>(saga_cmd, <span class="st">&#39; pj_proj4 2 -CRS_PROJ4 &quot;+proj=igh +ellps=WGS84 +units=m +no_defs&quot; -SOURCE &quot;input/shp.shp&quot; -TARGET &quot;input/shp_gh.shp&quot; -PARALLEL 1&#39;</span>))
+shp_gh &lt;-<span class="st"> </span><span class="kw">readOGR</span>(<span class="dt">dsn =</span> <span class="st">&quot;input&quot;</span>, <span class="dt">layer =</span> <span class="st">&quot;shp_gh&quot;</span>, <span class="dt">encoding =</span> <span class="st">&quot;ESRI Shapefile&quot;</span>)
+<span class="kw">toc</span>(<span class="dt">log =</span> <span class="ot">TRUE</span>)</code></pre>
+<p>Due to overlapping layers (which led to coverages higher than 100%), duplicate layers are excluded.</p>
+<pre class="sourceCode r"><code class="sourceCode r">shp_gh &lt;-<span class="st"> </span>shp_gh <span class="op">%&gt;%</span><span class="st"> </span><span class="kw">distinct</span>(IDENTITY_, <span class="dt">.keep_all =</span> <span class="ot">TRUE</span>)</code></pre>
+<p>Parameters are set. This includes the tag for this dataset, the different classes and the grid.</p>
+<pre class="sourceCode r"><code class="sourceCode r">dataset_tag &lt;-<span class="st"> &quot;GLiM&quot;</span>
+classes &lt;-<span class="st"> </span><span class="kw">levels</span>(shp_gh<span class="op">$</span>Litho)
+gh_grid &lt;-<span class="st"> &quot;D:/people/Tim/grid/output/Goode_Homolosine_domain_10km.tif&quot;</span></code></pre>
+<p>For each class of the shapefile, coverages are calculated per grid cell. These values are converted to a dataframe, which are added to a data frame with the values of every class.</p>
+<pre class="sourceCode r"><code class="sourceCode r"><span class="co"># Data.table to append values to</span>
+dt_total =<span class="st"> </span><span class="kw">data.table</span>()
+
+<span class="co"># Set progress bar</span>
+pb &lt;-<span class="st"> </span>progress_bar<span class="op">$</span><span class="kw">new</span>(<span class="dt">total =</span> <span class="kw">length</span>(classes),<span class="dt">format =</span> <span class="st">&quot;[:bar] :current/:total layers |:percent | :elapsedfull&quot;</span>, <span class="dt">width =</span> <span class="dv">60</span>)
+<span class="kw">tic</span>(<span class="st">&quot;Calculate coverage per type&quot;</span>)
+
+<span class="cf">for</span> (i <span class="cf">in</span> <span class="dv">1</span><span class="op">:</span><span class="kw">length</span>(classes)){
+  
+  <span class="co"># Progress bar</span>
+  pb<span class="op">$</span><span class="kw">tick</span>()
+  <span class="kw">Sys.sleep</span>(<span class="dv">1</span> <span class="op">/</span><span class="st"> </span><span class="dv">100</span>)
+  
+  <span class="co"># Make subset of different types</span>
+  shp_gh_subset &lt;-<span class="st"> </span>shp_gh[shp_gh<span class="op">$</span>Litho <span class="op">==</span><span class="st"> </span>classes[i],]
+  <span class="kw">writeOGR</span>(shp_gh_subset, <span class="kw">paste0</span>(<span class="st">&quot;analysis/&quot;</span>,classes[i],<span class="st">&quot;.gpkg&quot;</span>),<span class="kw">paste0</span>(<span class="st">&quot;type_&quot;</span>,classes[i]),<span class="st">&quot;GPKG&quot;</span>, <span class="dt">overwrite_layer =</span> <span class="ot">TRUE</span>)
+  
+  <span class="co"># Calculate polygon coverage per grid cell</span>
+  <span class="kw">system</span>(<span class="dt">show.output.on.console =</span> <span class="ot">FALSE</span>, <span class="kw">paste0</span>(saga_cmd, <span class="st">&#39; grid_gridding 8 -POLYGONS=</span><span class="ch">\&quot;</span><span class="st">analysis/&#39;</span>,classes[i],<span class="st">&#39;.gpkg&quot; -AREA=</span><span class="ch">\&quot;</span><span class="st">analysis/&#39;</span>,classes[i],<span class="st">&#39;.tif&quot; -TARGET_DEFINITION 1 -TARGET_TEMPLATE &#39;</span>, gh_grid))
+  
+  <span class="co"># Construct data.table with results</span>
+  type_raster &lt;-<span class="st"> </span><span class="kw">raster</span>(<span class="kw">paste0</span>(<span class="st">&quot;analysis/&quot;</span>,classes[i],<span class="st">&quot;.tif&quot;</span>))
+  type_dt &lt;-<span class="st"> </span><span class="kw">as.data.table.raster</span>(type_raster, <span class="dt">xy =</span> <span class="ot">TRUE</span>, <span class="dt">centroids =</span> <span class="ot">TRUE</span>, <span class="dt">na.rm =</span> <span class="ot">TRUE</span>)
+  <span class="kw">setnames</span>(type_dt, classes[i], <span class="st">&quot;proportion&quot;</span>)
+  type_dt[,proportion <span class="op">:</span><span class="er">=</span><span class="st"> </span>proportion<span class="op">/</span><span class="dv">100</span>]
+  type_dt[,feature <span class="op">:</span><span class="er">=</span><span class="st"> </span><span class="kw">paste</span>(dataset_tag, classes[i], <span class="dt">sep =</span> <span class="st">&quot;_&quot;</span>)]
+  <span class="kw">setcolorder</span>(type_dt, <span class="kw">c</span>(<span class="st">&quot;x&quot;</span>,<span class="st">&quot;y&quot;</span>,<span class="st">&quot;feature&quot;</span>,<span class="st">&quot;proportion&quot;</span>))
+  type_dt[,area_km2 <span class="op">:</span><span class="er">=</span><span class="st"> </span><span class="dv">10</span><span class="op">^</span><span class="dv">2</span> <span class="op">*</span><span class="st"> </span>proportion]
+  dt_total &lt;-<span class="st"> </span><span class="kw">bind_rows</span>(dt_total, type_dt)
+}
+<span class="kw">toc</span>(<span class="dt">log =</span> <span class="ot">TRUE</span>)</code></pre>
+<p>The correct cell ID is added to each grid value.</p>
+<pre class="sourceCode r"><code class="sourceCode r">grid_table &lt;-<span class="st"> </span><span class="kw">fread</span>(<span class="st">&quot;D:/people/Tim/grid/output/grid_table.csv&quot;</span>, <span class="dt">data.table =</span> <span class="ot">TRUE</span>)
+ID_join &lt;-<span class="st"> </span>data.table<span class="op">::</span><span class="kw">merge.data.table</span>(grid_table, dt_total, <span class="dt">by =</span> <span class="kw">c</span>(<span class="st">&quot;x&quot;</span>,<span class="st">&quot;y&quot;</span>))
+ID_join[,<span class="kw">c</span>(<span class="st">&quot;x&quot;</span>,<span class="st">&quot;y&quot;</span>) <span class="op">:</span><span class="er">=</span><span class="st"> </span><span class="ot">NULL</span>]</code></pre>
+<p>The value table is saved and elapsed time is logged.</p>
+<pre class="sourceCode r"><code class="sourceCode r"><span class="kw">fwrite</span>(ID_join, <span class="dt">file =</span> <span class="kw">paste0</span>(<span class="st">&quot;output/&quot;</span>,dataset_tag,<span class="st">&quot;_value_table.csv&quot;</span>), <span class="dt">row.names =</span> <span class="ot">FALSE</span>, <span class="dt">sep=</span><span class="st">&quot;,&quot;</span>, <span class="dt">dec =</span> <span class="st">&quot;.&quot;</span> )
+
+<span class="kw">toc</span>(<span class="dt">log =</span> <span class="ot">TRUE</span>)
+
+<span class="co"># Time elapsed</span>
+time_log &lt;-<span class="st"> </span><span class="kw">tic.log</span>(<span class="dt">format =</span> <span class="ot">TRUE</span>)</code></pre>
+</div>
+<div id="global-river-classification-gloric" class="section level2">
+<h2><span class="header-section-number">4.2</span> Global River Classification (GloRiC)</h2>
+<p>Packages are automatically installed (if needed) and loaded from <code>library</code>.</p>
+<pre class="sourceCode r"><code class="sourceCode r">list.of.packages &lt;-<span class="st"> </span><span class="kw">c</span>(<span class="st">&quot;rgdal&quot;</span>, <span class="st">&quot;sf&quot;</span>, <span class="st">&quot;raster&quot;</span>, <span class="st">&quot;dplyr&quot;</span>, <span class="st">&quot;data.table&quot;</span>, <span class="st">&quot;progress&quot;</span>, <span class="st">&quot;tictoc&quot;</span>)
+new.packages &lt;-<span class="st"> </span>list.of.packages[<span class="op">!</span>(list.of.packages <span class="op">%in%</span><span class="st"> </span><span class="kw">installed.packages</span>()[,<span class="st">&quot;Package&quot;</span>])]
+<span class="cf">if</span>(<span class="kw">length</span>(new.packages)) <span class="kw">install.packages</span>(new.packages, <span class="dt">dependencies =</span> <span class="ot">TRUE</span>)
+<span class="cf">if</span>(<span class="op">!</span>(<span class="st">&quot;dtraster&quot;</span> <span class="op">%in%</span><span class="st"> </span><span class="kw">installed.packages</span>()[,<span class="st">&quot;Package&quot;</span>])) remotes<span class="op">::</span><span class="kw">install_github</span>(<span class="st">&quot;ldemaz/dtraster&quot;</span>)
+
+<span class="kw">library</span>(rgdal)
+<span class="kw">library</span>(sf)
+<span class="kw">library</span>(raster)
+<span class="kw">library</span>(dplyr)
+<span class="kw">library</span>(data.table)
+<span class="kw">library</span>(dtraster)
+<span class="kw">library</span>(progress)
+<span class="kw">library</span>(tictoc)</code></pre>
+<p>A timer is set for the total calculation time and for each section seperately.</p>
+<pre class="sourceCode r"><code class="sourceCode r"><span class="kw">tic.clearlog</span>()
+<span class="kw">tic</span>(<span class="st">&quot;Total time&quot;</span>)</code></pre>
+<p><code>saga_cmd</code> is linked to the R console.</p>
+<pre class="sourceCode r"><code class="sourceCode r"><span class="cf">if</span>(<span class="kw">Sys.info</span>()[<span class="st">&#39;sysname&#39;</span>]<span class="op">==</span><span class="st">&quot;Windows&quot;</span>){
+  saga_cmd =<span class="st"> &quot;C:/Users/11026685/Downloads/saga-7.6.3_x64/saga-7.6.3_x64/saga_cmd.exe&quot;</span>
+} <span class="cf">else</span> {
+  saga_cmd =<span class="st"> &quot;saga_cmd&quot;</span>
+}
+<span class="kw">system</span>(<span class="kw">paste</span>(saga_cmd, <span class="st">&quot;-v&quot;</span>)) <span class="co">#&quot;SAGA Version: 7.6.3 (64 bit)&quot; if succesful</span></code></pre>
+<p>Working directory is set.</p>
+<pre class="sourceCode r"><code class="sourceCode r"><span class="kw">setwd</span>(<span class="st">&quot;D:/people/Tim/global&quot;</span>)</code></pre>
+<p>The required field is selected (Reach_type)</p>
+<pre class="sourceCode r"><code class="sourceCode r">input_shp &lt;-<span class="st"> &quot;input/GloRiC_v10.shp&quot;</span>
+input_shp_del &lt;-<span class="st"> &quot;input/GloRiC_v10_del.shp&quot;</span>
+<span class="kw">system</span>(<span class="kw">paste0</span>(saga_cmd, <span class="st">&#39; table_tools 11 -TABLE &quot;&#39;</span>,input_shp,<span class="st">&#39;&quot; -OUT_SHAPES &quot;&#39;</span>,input_shp_del,<span class="st">&#39;&quot; -FIELDS 0,1,2,3,4,5,6,7,8,9,10,11,12,14&#39;</span>))</code></pre>
+<p>The shapefile is reprojected to Goode Homolosine.</p>
+<pre class="sourceCode r"><code class="sourceCode r">input_shp_gh &lt;-<span class="st"> &quot;input/GloRiC_v10_gh.shp&quot;</span>
+<span class="kw">tic</span>(<span class="st">&quot;Reproject to Goode Homolosine&quot;</span>)
+<span class="kw">system</span>(<span class="kw">paste0</span>(saga_cmd, <span class="st">&#39; pj_proj4 2 -CRS_PROJ4 &quot;+proj=igh +ellps=WGS84 +units=m +no_defs&quot; -SOURCE &quot;&#39;</span>,input_shp_del,<span class="st">&#39;&quot; -TARGET &quot;&#39;</span>,input_shp_gh,<span class="st">&#39;&quot; -PARALLEL 1&#39;</span>))
+<span class="kw">toc</span>(<span class="dt">log =</span> <span class="ot">TRUE</span>)</code></pre>
+<p>“0” values are deleted (water).</p>
+<pre class="sourceCode r"><code class="sourceCode r">shp_gh &lt;-<span class="st"> </span><span class="kw">read_sf</span>(input_shp_gh)
+shp_gh &lt;-<span class="st"> </span>dplyr<span class="op">::</span><span class="kw">filter</span>(shp_gh, Reach_type <span class="op">!=</span><span class="st"> </span><span class="dv">0</span>)
+shp_gh<span class="op">$</span>Reach_type &lt;-<span class="st"> </span><span class="kw">as.numeric</span>(shp_gh<span class="op">$</span>Reach_type) 
+shp_gh &lt;-<span class="st"> </span><span class="kw">write_sf</span>(shp_gh, input_shp_gh)</code></pre>
+<p>Because the shapefile only contains Polylines, it is converted to a raster.</p>
+<pre class="sourceCode r"><code class="sourceCode r">input_raster &lt;-<span class="st"> &quot;input/GloRiC_v10_gh_raster.tif&quot;</span>
+<span class="kw">tic</span>(<span class="st">&quot;Rasterize shapefile&quot;</span>)
+<span class="kw">system</span>(<span class="kw">paste0</span>(saga_cmd, <span class="st">&#39; grid_gridding 0 -INPUT &quot;&#39;</span>,input_shp_gh,<span class="st">&#39;&quot; -GRID &quot;&#39;</span>,input_raster,<span class="st">&#39;&quot; -FIELD &quot;Reach_type&quot; -TARGET_USER_SIZE 1000&#39;</span>))
+<span class="kw">toc</span>(<span class="dt">log =</span> <span class="ot">TRUE</span>)</code></pre>
+<p>Grid coverages are calculated per class.</p>
+<pre class="sourceCode r"><code class="sourceCode r">output_types &lt;-<span class="st"> &quot;analysis/GloRiC_v10_gh_.sgrd&quot;</span>
+gh_grid &lt;-<span class="st"> &quot;D:/people/Tim/grid/output/Goode_Homolosine_domain_10km.tif&quot;</span>
+<span class="kw">tic</span>(<span class="st">&quot;Grid coverage per class&quot;</span>)
+<span class="kw">system</span>(<span class="kw">paste0</span>(saga_cmd, <span class="st">&#39; grid_analysis 26 -CLASSES &quot;&#39;</span>,input_raster, <span class="st">&#39;&quot; -COVERAGES &quot;&#39;</span>,output_types,<span class="st">&#39;&quot; -TARGET_DEFINITION 1 -TARGET_TEMPLATE &quot;&#39;</span>,gh_grid,<span class="st">&#39;&quot;&#39;</span>))
+<span class="kw">toc</span>(<span class="dt">log =</span> <span class="ot">TRUE</span>)</code></pre>
+<p>Parameters are set. This includes the tag for this dataset and the different classes. A list of files is made for the coverages of all classes.</p>
+<pre class="sourceCode r"><code class="sourceCode r">type_list &lt;-<span class="st"> </span><span class="kw">list.files</span>(<span class="dt">path=</span><span class="st">&quot;analysis&quot;</span>, <span class="dt">pattern =</span> <span class="st">&quot;^.*GloRiC_v10_gh_*.*.sgrd$&quot;</span>, <span class="dt">full.names =</span> <span class="ot">TRUE</span>)
+dataset_tag &lt;-<span class="st"> &quot;GloRiC&quot;</span>
+classes &lt;-<span class="st"> </span><span class="kw">data.table</span>(<span class="dt">name =</span> <span class="kw">sort</span>(<span class="kw">unique</span>(shp_gh<span class="op">$</span>Reach_type)), <span class="dt">type =</span> <span class="kw">gsub</span>(<span class="st">&quot;analysis/|.sgrd&quot;</span>,<span class="st">&quot;&quot;</span>,type_list))</code></pre>
+<p>Grid values for all classes are added to one data frame.</p>
+<pre class="sourceCode r"><code class="sourceCode r"><span class="co"># Data.table to append values to</span>
+dt_total =<span class="st"> </span><span class="kw">data.table</span>()
+
+<span class="co"># Set progress bar</span>
+pb &lt;-<span class="st"> </span>progress_bar<span class="op">$</span><span class="kw">new</span>(<span class="dt">total =</span> <span class="kw">NROW</span>(classes), <span class="dt">format =</span> <span class="st">&quot;[:bar] :current/:total layers |:percent | :elapsedfull&quot;</span>, <span class="dt">width =</span> <span class="dv">60</span>)
+
+<span class="kw">tic</span>(<span class="st">&quot;Construct table with coverages&quot;</span>)
+<span class="cf">for</span> (i <span class="cf">in</span> <span class="dv">1</span><span class="op">:</span><span class="kw">NROW</span>(classes)){
+  
+  <span class="co"># Progress bar</span>
+  pb<span class="op">$</span><span class="kw">tick</span>()
+  <span class="kw">Sys.sleep</span>(<span class="dv">1</span> <span class="op">/</span><span class="st"> </span><span class="dv">100</span>)
+  
+  <span class="co"># Construct data.table with results</span>
+  type_raster &lt;-<span class="st"> </span><span class="kw">raster</span>(type_list[i])
+  type_raster[type_raster <span class="op">==</span><span class="st"> </span><span class="dv">0</span>] &lt;-<span class="st"> </span><span class="ot">NA</span>
+  type_dt &lt;-<span class="st"> </span><span class="kw">as.data.table.raster</span>(type_raster, <span class="dt">xy =</span> <span class="ot">TRUE</span>, <span class="dt">centroids =</span> <span class="ot">TRUE</span>, <span class="dt">na.rm =</span> <span class="ot">TRUE</span>)
+  <span class="kw">setnames</span>(type_dt, classes<span class="op">$</span>type[i], <span class="st">&quot;proportion&quot;</span>)
+  type_dt[,feature <span class="op">:</span><span class="er">=</span><span class="st"> </span><span class="kw">paste</span>(dataset_tag, classes<span class="op">$</span>name[i], <span class="dt">sep =</span> <span class="st">&quot;_&quot;</span>)]
+  <span class="kw">setcolorder</span>(type_dt, <span class="kw">c</span>(<span class="st">&quot;x&quot;</span>,<span class="st">&quot;y&quot;</span>,<span class="st">&quot;feature&quot;</span>,<span class="st">&quot;proportion&quot;</span>))
+  type_dt[,area_km2 <span class="op">:</span><span class="er">=</span><span class="st"> </span><span class="dv">10</span><span class="op">^</span><span class="dv">2</span> <span class="op">*</span><span class="st"> </span>proportion]
+  dt_total &lt;-<span class="st"> </span><span class="kw">bind_rows</span>(dt_total, type_dt)
+}
+<span class="kw">toc</span>(<span class="dt">log =</span> <span class="ot">TRUE</span>)</code></pre>
+<p>The correct cell ID is added to each grid value.</p>
+<pre class="sourceCode r"><code class="sourceCode r">grid_table &lt;-<span class="st"> </span><span class="kw">fread</span>(<span class="st">&quot;D:/people/Tim/grid/output/grid_table.csv&quot;</span>, <span class="dt">data.table =</span> <span class="ot">TRUE</span>)
+ID_join &lt;-<span class="st"> </span>data.table<span class="op">::</span><span class="kw">merge.data.table</span>(grid_table, dt_total, <span class="dt">by =</span> <span class="kw">c</span>(<span class="st">&quot;x&quot;</span>,<span class="st">&quot;y&quot;</span>))
+ID_join[,<span class="kw">c</span>(<span class="st">&quot;x&quot;</span>,<span class="st">&quot;y&quot;</span>) <span class="op">:</span><span class="er">=</span><span class="st"> </span><span class="ot">NULL</span>]</code></pre>
+<p>The value table is saved and elapsed time is logged.</p>
+<pre class="sourceCode r"><code class="sourceCode r"><span class="kw">fwrite</span>(ID_join, <span class="dt">file =</span> <span class="kw">paste0</span>(<span class="st">&quot;output/&quot;</span>,dataset_tag,<span class="st">&quot;_value_table.csv&quot;</span>), <span class="dt">row.names =</span> <span class="ot">FALSE</span>, <span class="dt">sep=</span><span class="st">&quot;,&quot;</span>, <span class="dt">dec =</span> <span class="st">&quot;.&quot;</span> )
+
+<span class="kw">toc</span>(<span class="dt">log =</span> <span class="ot">TRUE</span>)
+
+<span class="co"># Time elapsed</span>
+time_log &lt;-<span class="st"> </span><span class="kw">tic.log</span>(<span class="dt">format =</span> <span class="ot">TRUE</span>)</code></pre>
+</div>
+<div id="global-lakes-and-wetlands-database-glwd" class="section level2">
+<h2><span class="header-section-number">4.3</span> Global Lakes and Wetlands Database (GLWD)</h2>
+<p>Packages are automatically installed (if needed) and loaded from <code>library</code>.</p>
+<pre class="sourceCode r"><code class="sourceCode r">list.of.packages &lt;-<span class="st"> </span><span class="kw">c</span>(<span class="st">&quot;rgdal&quot;</span>, <span class="st">&quot;sf&quot;</span>, <span class="st">&quot;raster&quot;</span>, <span class="st">&quot;dplyr&quot;</span>, <span class="st">&quot;data.table&quot;</span>, <span class="st">&quot;progress&quot;</span>, <span class="st">&quot;tictoc&quot;</span>)
+new.packages &lt;-<span class="st"> </span>list.of.packages[<span class="op">!</span>(list.of.packages <span class="op">%in%</span><span class="st"> </span><span class="kw">installed.packages</span>()[,<span class="st">&quot;Package&quot;</span>])]
+<span class="cf">if</span>(<span class="kw">length</span>(new.packages)) <span class="kw">install.packages</span>(new.packages, <span class="dt">dependencies =</span> <span class="ot">TRUE</span>)
+<span class="cf">if</span>(<span class="op">!</span>(<span class="st">&quot;dtraster&quot;</span> <span class="op">%in%</span><span class="st"> </span><span class="kw">installed.packages</span>()[,<span class="st">&quot;Package&quot;</span>])) remotes<span class="op">::</span><span class="kw">install_github</span>(<span class="st">&quot;ldemaz/dtraster&quot;</span>)
+
+<span class="kw">library</span>(rgdal)
+<span class="kw">library</span>(sf)
+<span class="kw">library</span>(raster)
+<span class="kw">library</span>(dplyr)
+<span class="kw">library</span>(data.table)
+<span class="kw">library</span>(dtraster)
+<span class="kw">library</span>(progress)
+<span class="kw">library</span>(tictoc)</code></pre>
+<p>A timer is set for the total calculation time and for each section seperately.</p>
+<pre class="sourceCode r"><code class="sourceCode r"><span class="kw">tic.clearlog</span>()
+<span class="kw">tic</span>(<span class="st">&quot;Total time&quot;</span>)</code></pre>
+<p><code>saga_cmd</code> is linked to the R console.</p>
+<pre class="sourceCode r"><code class="sourceCode r"><span class="cf">if</span>(<span class="kw">Sys.info</span>()[<span class="st">&#39;sysname&#39;</span>]<span class="op">==</span><span class="st">&quot;Windows&quot;</span>){
+  saga_cmd =<span class="st"> &quot;C:/Users/11026685/Downloads/saga-7.6.3_x64/saga-7.6.3_x64/saga_cmd.exe&quot;</span>
+} <span class="cf">else</span> {
+  saga_cmd =<span class="st"> &quot;saga_cmd&quot;</span>
+}
+<span class="kw">system</span>(<span class="kw">paste</span>(saga_cmd, <span class="st">&quot;-v&quot;</span>)) <span class="co">#&quot;SAGA Version: 7.6.3 (64 bit)&quot; if succesful</span></code></pre>
+<p>Working directory is set.</p>
+<pre class="sourceCode r"><code class="sourceCode r"><span class="kw">setwd</span>(<span class="st">&quot;D:/people/Tim/global&quot;</span>)</code></pre>
+<p>The raster is reprojected to Goode Homolosine</p>
+<pre class="sourceCode r"><code class="sourceCode r">input_raster &lt;-<span class="st"> &quot;input/glwd_3.tif&quot;</span>
+input_gh &lt;-<span class="st"> &quot;input/glwd_3_gh.tif&quot;</span>
+<span class="kw">tic</span>(<span class="st">&quot;Reproject to Goode Homolosine&quot;</span>)
+<span class="kw">system</span>(<span class="kw">paste0</span>(saga_cmd, <span class="st">&#39; pj_proj4 4 -CRS_PROJ4 &quot;+proj=igh +ellps=WGS84 +units=m +no_defs&quot; -SOURCE &#39;</span>, input_raster,<span class="st">&#39; -GRID &#39;</span>,input_gh,<span class="st">&#39; -RESAMPLING 0&#39;</span>))
+<span class="kw">toc</span>(<span class="dt">log =</span> <span class="ot">TRUE</span>)</code></pre>
+<p>Grid coverages are calculated per class.</p>
+<pre class="sourceCode r"><code class="sourceCode r">output_types &lt;-<span class="st"> &quot;analysis/glwd_3_gh_.sgrd&quot;</span>
+gh_grid &lt;-<span class="st"> &quot;D:/people/Tim/grid/output/Goode_Homolosine_domain_10km.tif&quot;</span>
+<span class="kw">tic</span>(<span class="st">&quot;Grid coverage per class&quot;</span>)
+<span class="kw">system</span>(<span class="kw">paste0</span>(saga_cmd, <span class="st">&#39; grid_analysis 26 -CLASSES &quot;&#39;</span>,input_gh, <span class="st">&#39;&quot; -COVERAGES &quot;&#39;</span>,output_types,<span class="st">&#39;&quot; -TARGET_DEFINITION 1 -TARGET_TEMPLATE &quot;&#39;</span>,gh_grid,<span class="st">&#39;&quot;&#39;</span>))
+<span class="kw">toc</span>(<span class="dt">log =</span> <span class="ot">TRUE</span>)</code></pre>
+<p>Parameters are set. This includes the tag for this dataset and the different classes. A list of files is made for the coverages of all classes.</p>
+<pre class="sourceCode r"><code class="sourceCode r">type_list &lt;-<span class="st"> </span><span class="kw">list.files</span>(<span class="dt">path=</span><span class="st">&quot;analysis&quot;</span>, <span class="dt">pattern =</span> <span class="st">&quot;^.*glwd_3_gh_*.*.sgrd$&quot;</span>, <span class="dt">full.names =</span> <span class="ot">TRUE</span>)
+dataset_tag &lt;-<span class="st"> &quot;GLWD&quot;</span>
+classes &lt;-<span class="st"> </span><span class="kw">data.table</span>(<span class="dt">name =</span> <span class="kw">sort</span>(<span class="kw">unique</span>(shp_gh<span class="op">$</span>Reach_type)), <span class="dt">type =</span> <span class="kw">gsub</span>(<span class="st">&quot;analysis/|.sgrd&quot;</span>,<span class="st">&quot;&quot;</span>,type_list))</code></pre>
+<p>Grid values for all classes are added to one data frame.</p>
+<pre class="sourceCode r"><code class="sourceCode r"><span class="co"># Data.table to append values to</span>
+dt_total =<span class="st"> </span><span class="kw">data.table</span>()
+
+<span class="co"># Set progress bar</span>
+pb &lt;-<span class="st"> </span>progress_bar<span class="op">$</span><span class="kw">new</span>(<span class="dt">total =</span> <span class="kw">NROW</span>(classes), <span class="dt">format =</span> <span class="st">&quot;[:bar] :current/:total layers |:percent | :elapsedfull&quot;</span>, <span class="dt">width =</span> <span class="dv">60</span>)
+
+<span class="kw">tic</span>(<span class="st">&quot;Construct table with coverages&quot;</span>)
+<span class="cf">for</span> (i <span class="cf">in</span> <span class="dv">1</span><span class="op">:</span><span class="kw">NROW</span>(classes)){
+  
+  <span class="co"># Progress bar</span>
+  pb<span class="op">$</span><span class="kw">tick</span>()
+  <span class="kw">Sys.sleep</span>(<span class="dv">1</span> <span class="op">/</span><span class="st"> </span><span class="dv">100</span>)
+  
+  <span class="co"># Construct data.table with results</span>
+  type_raster &lt;-<span class="st"> </span><span class="kw">raster</span>(type_list[i])
+  type_raster[type_raster <span class="op">==</span><span class="st"> </span><span class="dv">0</span>] &lt;-<span class="st"> </span><span class="ot">NA</span>
+  type_dt &lt;-<span class="st"> </span><span class="kw">as.data.table.raster</span>(type_raster, <span class="dt">xy =</span> <span class="ot">TRUE</span>, <span class="dt">centroids =</span> <span class="ot">TRUE</span>, <span class="dt">na.rm =</span> <span class="ot">TRUE</span>)
+  <span class="kw">setnames</span>(type_dt, classes<span class="op">$</span>type[i], <span class="st">&quot;proportion&quot;</span>)
+  type_dt[,feature <span class="op">:</span><span class="er">=</span><span class="st"> </span><span class="kw">paste</span>(dataset_tag, classes<span class="op">$</span>name[i], <span class="dt">sep =</span> <span class="st">&quot;_&quot;</span>)]
+  <span class="kw">setcolorder</span>(type_dt, <span class="kw">c</span>(<span class="st">&quot;x&quot;</span>,<span class="st">&quot;y&quot;</span>,<span class="st">&quot;feature&quot;</span>,<span class="st">&quot;proportion&quot;</span>))
+  type_dt[,area_km2 <span class="op">:</span><span class="er">=</span><span class="st"> </span><span class="dv">10</span><span class="op">^</span><span class="dv">2</span> <span class="op">*</span><span class="st"> </span>proportion]
+  dt_total &lt;-<span class="st"> </span><span class="kw">bind_rows</span>(dt_total, type_dt)
+}
+<span class="kw">toc</span>(<span class="dt">log =</span> <span class="ot">TRUE</span>)</code></pre>
+<p>The correct cell ID is added to each grid value.</p>
+<pre class="sourceCode r"><code class="sourceCode r">grid_table &lt;-<span class="st"> </span><span class="kw">fread</span>(<span class="st">&quot;D:/people/Tim/grid/output/grid_table.csv&quot;</span>, <span class="dt">data.table =</span> <span class="ot">TRUE</span>)
+ID_join &lt;-<span class="st"> </span>data.table<span class="op">::</span><span class="kw">merge.data.table</span>(grid_table, dt_total, <span class="dt">by =</span> <span class="kw">c</span>(<span class="st">&quot;x&quot;</span>,<span class="st">&quot;y&quot;</span>))
+ID_join[,<span class="kw">c</span>(<span class="st">&quot;x&quot;</span>,<span class="st">&quot;y&quot;</span>) <span class="op">:</span><span class="er">=</span><span class="st"> </span><span class="ot">NULL</span>]</code></pre>
+<p>The value table is saved and elapsed time is logged.</p>
+<pre class="sourceCode r"><code class="sourceCode r"><span class="kw">fwrite</span>(ID_join, <span class="dt">file =</span> <span class="kw">paste0</span>(<span class="st">&quot;output/&quot;</span>,dataset_tag,<span class="st">&quot;_value_table.csv&quot;</span>), <span class="dt">row.names =</span> <span class="ot">FALSE</span>, <span class="dt">sep=</span><span class="st">&quot;,&quot;</span>, <span class="dt">dec =</span> <span class="st">&quot;.&quot;</span> )
+
+<span class="kw">toc</span>(<span class="dt">log =</span> <span class="ot">TRUE</span>)
+
+<span class="co"># Time elapsed</span>
+time_log &lt;-<span class="st"> </span><span class="kw">tic.log</span>(<span class="dt">format =</span> <span class="ot">TRUE</span>)</code></pre>
+</div>
+<div id="global-terrain-classification-iwahashi-et-al.-2018" class="section level2">
+<h2><span class="header-section-number">4.4</span> Global terrain classification (Iwahashi et al., 2018)</h2>
+<p>Packages are automatically installed (if needed) and loaded from <code>library</code>.</p>
+<pre class="sourceCode r"><code class="sourceCode r">list.of.packages &lt;-<span class="st"> </span><span class="kw">c</span>(<span class="st">&quot;rgdal&quot;</span>, <span class="st">&quot;sf&quot;</span>, <span class="st">&quot;raster&quot;</span>, <span class="st">&quot;dplyr&quot;</span>, <span class="st">&quot;data.table&quot;</span>, <span class="st">&quot;progress&quot;</span>, <span class="st">&quot;tictoc&quot;</span>)
+new.packages &lt;-<span class="st"> </span>list.of.packages[<span class="op">!</span>(list.of.packages <span class="op">%in%</span><span class="st"> </span><span class="kw">installed.packages</span>()[,<span class="st">&quot;Package&quot;</span>])]
+<span class="cf">if</span>(<span class="kw">length</span>(new.packages)) <span class="kw">install.packages</span>(new.packages, <span class="dt">dependencies =</span> <span class="ot">TRUE</span>)
+<span class="cf">if</span>(<span class="op">!</span>(<span class="st">&quot;dtraster&quot;</span> <span class="op">%in%</span><span class="st"> </span><span class="kw">installed.packages</span>()[,<span class="st">&quot;Package&quot;</span>])) remotes<span class="op">::</span><span class="kw">install_github</span>(<span class="st">&quot;ldemaz/dtraster&quot;</span>)
+
+<span class="kw">library</span>(rgdal)
+<span class="kw">library</span>(sf)
+<span class="kw">library</span>(raster)
+<span class="kw">library</span>(dplyr)
+<span class="kw">library</span>(data.table)
+<span class="kw">library</span>(dtraster)
+<span class="kw">library</span>(progress)
+<span class="kw">library</span>(tictoc)</code></pre>
+<p>A timer is set for the total calculation time and for each section seperately.</p>
+<pre class="sourceCode r"><code class="sourceCode r"><span class="kw">tic.clearlog</span>()
+<span class="kw">tic</span>(<span class="st">&quot;Total time&quot;</span>)</code></pre>
+<p><code>saga_cmd</code> is linked to the R console.</p>
+<pre class="sourceCode r"><code class="sourceCode r"><span class="cf">if</span>(<span class="kw">Sys.info</span>()[<span class="st">&#39;sysname&#39;</span>]<span class="op">==</span><span class="st">&quot;Windows&quot;</span>){
+  saga_cmd =<span class="st"> &quot;C:/Users/11026685/Downloads/saga-7.6.3_x64/saga-7.6.3_x64/saga_cmd.exe&quot;</span>
+} <span class="cf">else</span> {
+  saga_cmd =<span class="st"> &quot;saga_cmd&quot;</span>
+}
+<span class="kw">system</span>(<span class="kw">paste</span>(saga_cmd, <span class="st">&quot;-v&quot;</span>)) <span class="co">#&quot;SAGA Version: 7.6.3 (64 bit)&quot; if succesful</span></code></pre>
+<p>Working directory is set.</p>
+<pre class="sourceCode r"><code class="sourceCode r"><span class="kw">setwd</span>(<span class="st">&quot;D:/people/Tim/global&quot;</span>)</code></pre>
+<p>Water is set as no-data value.</p>
+<pre class="sourceCode r"><code class="sourceCode r">full_raster &lt;-<span class="st"> &quot;input/GlobalTerrainClassification_Iwahashi_etal_2018.tif&quot;</span>
+crop_raster &lt;-<span class="st"> &quot;input/Iwahashi.tif&quot;</span>
+<span class="kw">tic</span>(<span class="st">&quot;Set water (0) as no-data&quot;</span>)
+<span class="kw">system</span>(<span class="kw">paste0</span>(saga_cmd, <span class="st">&#39; grid_tools 15 -INPUT &#39;</span>,full_raster,<span class="st">&#39; -RESULT &#39;</span>,crop_raster,<span class="st">&#39; -NEW 0 -RESULT_NODATA_CHOICE 1 -RESULT_NODATA_VALUE 0&#39;</span>))
+<span class="kw">toc</span>(<span class="dt">log =</span> <span class="ot">TRUE</span>)</code></pre>
+<p>The raster is reprojected to Goode Homolosine</p>
+<pre class="sourceCode r"><code class="sourceCode r">input_raster &lt;-<span class="st"> &quot;input/Iwahashi.tif&quot;</span>
+input_gh &lt;-<span class="st"> &quot;input/Iwahashi_gh.tif&quot;</span>
+<span class="kw">tic</span>(<span class="st">&quot;Reproject to Goode Homolosine&quot;</span>)
+<span class="kw">system</span>(<span class="kw">paste0</span>(saga_cmd, <span class="st">&#39; pj_proj4 4 -CRS_PROJ4 &quot;+proj=igh +ellps=WGS84 +units=m +no_defs&quot; -SOURCE &#39;</span>, input_raster,<span class="st">&#39; -GRID &#39;</span>,input_gh,<span class="st">&#39; -RESAMPLING 0&#39;</span>))
+<span class="kw">toc</span>(<span class="dt">log =</span> <span class="ot">TRUE</span>)</code></pre>
+<p>Grid coverages are calculated per class.</p>
+<pre class="sourceCode r"><code class="sourceCode r">output_types &lt;-<span class="st"> &quot;analysis/Iwahashi_gh_.sgrd&quot;</span>
+gh_grid &lt;-<span class="st"> &quot;D:/people/Tim/grid/output/Goode_Homolosine_domain_10km.tif&quot;</span>
+<span class="kw">tic</span>(<span class="st">&quot;Grid coverage per class&quot;</span>)
+<span class="kw">system</span>(<span class="kw">paste0</span>(saga_cmd, <span class="st">&#39; grid_analysis 26 -CLASSES &quot;&#39;</span>,input_gh, <span class="st">&#39;&quot; -COVERAGES &quot;&#39;</span>,output_types,<span class="st">&#39;&quot; -TARGET_DEFINITION 1 -TARGET_TEMPLATE &quot;&#39;</span>,gh_grid,<span class="st">&#39;&quot;&#39;</span>))
+<span class="kw">toc</span>(<span class="dt">log =</span> <span class="ot">TRUE</span>)</code></pre>
+<p>Parameters are set. This includes the tag for this dataset and the different classes. A list of files is made for the coverages of all classes.</p>
+<pre class="sourceCode r"><code class="sourceCode r">type_list &lt;-<span class="st"> </span><span class="kw">list.files</span>(<span class="dt">path=</span><span class="st">&quot;analysis&quot;</span>, <span class="dt">pattern =</span> <span class="st">&quot;^.*Iwahashi_gh_*.*.sgrd$&quot;</span>, <span class="dt">full.names =</span> <span class="ot">TRUE</span>)
+dataset_tag &lt;-<span class="st"> &quot;Iwahashi&quot;</span>
+classes &lt;-<span class="st"> </span><span class="kw">data.table</span>(<span class="dt">name =</span> <span class="dv">1</span><span class="op">:</span><span class="kw">length</span>(type_list), <span class="dt">type =</span> <span class="kw">gsub</span>(<span class="st">&quot;analysis/|.sgrd&quot;</span>,<span class="st">&quot;&quot;</span>,type_list))</code></pre>
+<p>Grid values for all classes are added to one data frame.</p>
+<pre class="sourceCode r"><code class="sourceCode r"><span class="co"># Data.table to append values to</span>
+dt_total =<span class="st"> </span><span class="kw">data.table</span>()
+
+<span class="co"># Set progress bar</span>
+pb &lt;-<span class="st"> </span>progress_bar<span class="op">$</span><span class="kw">new</span>(<span class="dt">total =</span> <span class="kw">NROW</span>(classes), <span class="dt">format =</span> <span class="st">&quot;[:bar] :current/:total layers |:percent | :elapsedfull&quot;</span>, <span class="dt">width =</span> <span class="dv">60</span>)
+
+<span class="kw">tic</span>(<span class="st">&quot;Construct table with coverages&quot;</span>)
+<span class="cf">for</span> (i <span class="cf">in</span> <span class="dv">1</span><span class="op">:</span><span class="kw">NROW</span>(classes)){
+  
+  <span class="co"># Progress bar</span>
+  pb<span class="op">$</span><span class="kw">tick</span>()
+  <span class="kw">Sys.sleep</span>(<span class="dv">1</span> <span class="op">/</span><span class="st"> </span><span class="dv">100</span>)
+  
+  <span class="co"># Construct data.table with results</span>
+  type_raster &lt;-<span class="st"> </span><span class="kw">raster</span>(type_list[i])
+  type_raster[type_raster <span class="op">==</span><span class="st"> </span><span class="dv">0</span>] &lt;-<span class="st"> </span><span class="ot">NA</span>
+  type_dt &lt;-<span class="st"> </span><span class="kw">as.data.table.raster</span>(type_raster, <span class="dt">xy =</span> <span class="ot">TRUE</span>, <span class="dt">centroids =</span> <span class="ot">TRUE</span>, <span class="dt">na.rm =</span> <span class="ot">TRUE</span>)
+  <span class="kw">setnames</span>(type_dt, classes<span class="op">$</span>type[i], <span class="st">&quot;proportion&quot;</span>)
+  type_dt[,feature <span class="op">:</span><span class="er">=</span><span class="st"> </span><span class="kw">paste</span>(dataset_tag, classes<span class="op">$</span>name[i], <span class="dt">sep =</span> <span class="st">&quot;_&quot;</span>)]
+  <span class="kw">setcolorder</span>(type_dt, <span class="kw">c</span>(<span class="st">&quot;x&quot;</span>,<span class="st">&quot;y&quot;</span>,<span class="st">&quot;feature&quot;</span>,<span class="st">&quot;proportion&quot;</span>))
+  type_dt[,area_km2 <span class="op">:</span><span class="er">=</span><span class="st"> </span><span class="dv">10</span><span class="op">^</span><span class="dv">2</span> <span class="op">*</span><span class="st"> </span>proportion]
+  dt_total &lt;-<span class="st"> </span><span class="kw">bind_rows</span>(dt_total, type_dt)
+}
+<span class="kw">toc</span>(<span class="dt">log =</span> <span class="ot">TRUE</span>)</code></pre>
+<p>The correct cell ID is added to each grid value.</p>
+<pre class="sourceCode r"><code class="sourceCode r">grid_table &lt;-<span class="st"> </span><span class="kw">fread</span>(<span class="st">&quot;D:/people/Tim/grid/output/grid_table.csv&quot;</span>, <span class="dt">data.table =</span> <span class="ot">TRUE</span>)
+ID_join &lt;-<span class="st"> </span>data.table<span class="op">::</span><span class="kw">merge.data.table</span>(grid_table, dt_total, <span class="dt">by =</span> <span class="kw">c</span>(<span class="st">&quot;x&quot;</span>,<span class="st">&quot;y&quot;</span>))
+ID_join[,<span class="kw">c</span>(<span class="st">&quot;x&quot;</span>,<span class="st">&quot;y&quot;</span>) <span class="op">:</span><span class="er">=</span><span class="st"> </span><span class="ot">NULL</span>]</code></pre>
+<p>The value table is saved and elapsed time is logged.</p>
+<pre class="sourceCode r"><code class="sourceCode r"><span class="kw">fwrite</span>(ID_join, <span class="dt">file =</span> <span class="kw">paste0</span>(<span class="st">&quot;output/&quot;</span>,dataset_tag,<span class="st">&quot;_value_table.csv&quot;</span>), <span class="dt">row.names =</span> <span class="ot">FALSE</span>, <span class="dt">sep=</span><span class="st">&quot;,&quot;</span>, <span class="dt">dec =</span> <span class="st">&quot;.&quot;</span> )
+
+<span class="kw">toc</span>(<span class="dt">log =</span> <span class="ot">TRUE</span>)
+
+<span class="co"># Time elapsed</span>
+time_log &lt;-<span class="st"> </span><span class="kw">tic.log</span>(<span class="dt">format =</span> <span class="ot">TRUE</span>)</code></pre>
+</div>
+<div id="world-reference-base-soil-groups-soilgrids" class="section level2">
+<h2><span class="header-section-number">4.5</span> World Reference Base Soil Groups (SoilGrids)</h2>
+<p>Packages are automatically installed (if needed) and loaded from <code>library</code>.</p>
+<pre class="sourceCode r"><code class="sourceCode r">list.of.packages &lt;-<span class="st"> </span><span class="kw">c</span>(<span class="st">&quot;rgdal&quot;</span>, <span class="st">&quot;sf&quot;</span>, <span class="st">&quot;raster&quot;</span>, <span class="st">&quot;dplyr&quot;</span>, <span class="st">&quot;data.table&quot;</span>, <span class="st">&quot;progress&quot;</span>, <span class="st">&quot;tictoc&quot;</span>)
+new.packages &lt;-<span class="st"> </span>list.of.packages[<span class="op">!</span>(list.of.packages <span class="op">%in%</span><span class="st"> </span><span class="kw">installed.packages</span>()[,<span class="st">&quot;Package&quot;</span>])]
+<span class="cf">if</span>(<span class="kw">length</span>(new.packages)) <span class="kw">install.packages</span>(new.packages, <span class="dt">dependencies =</span> <span class="ot">TRUE</span>)
+<span class="cf">if</span>(<span class="op">!</span>(<span class="st">&quot;dtraster&quot;</span> <span class="op">%in%</span><span class="st"> </span><span class="kw">installed.packages</span>()[,<span class="st">&quot;Package&quot;</span>])) remotes<span class="op">::</span><span class="kw">install_github</span>(<span class="st">&quot;ldemaz/dtraster&quot;</span>)
+
+<span class="kw">library</span>(rgdal)
+<span class="kw">library</span>(sf)
+<span class="kw">library</span>(raster)
+<span class="kw">library</span>(dplyr)
+<span class="kw">library</span>(data.table)
+<span class="kw">library</span>(dtraster)
+<span class="kw">library</span>(progress)
+<span class="kw">library</span>(tictoc)</code></pre>
+<p>A timer is set for the total calculation time and for each section seperately.</p>
+<pre class="sourceCode r"><code class="sourceCode r"><span class="kw">tic.clearlog</span>()
+<span class="kw">tic</span>(<span class="st">&quot;Total time&quot;</span>)</code></pre>
+<p><code>saga_cmd</code> is linked to the R console.</p>
+<pre class="sourceCode r"><code class="sourceCode r"><span class="cf">if</span>(<span class="kw">Sys.info</span>()[<span class="st">&#39;sysname&#39;</span>]<span class="op">==</span><span class="st">&quot;Windows&quot;</span>){
+  saga_cmd =<span class="st"> &quot;C:/Users/11026685/Downloads/saga-7.6.3_x64/saga-7.6.3_x64/saga_cmd.exe&quot;</span>
+} <span class="cf">else</span> {
+  saga_cmd =<span class="st"> &quot;saga_cmd&quot;</span>
+}
+<span class="kw">system</span>(<span class="kw">paste</span>(saga_cmd, <span class="st">&quot;-v&quot;</span>)) <span class="co">#&quot;SAGA Version: 7.6.3 (64 bit)&quot; if succesful</span></code></pre>
+<p>Working directory is set.</p>
+<pre class="sourceCode r"><code class="sourceCode r"><span class="kw">setwd</span>(<span class="st">&quot;D:/people/Tim/global&quot;</span>)</code></pre>
+<p>The raster is reprojected to Goode Homolosine</p>
+<pre class="sourceCode r"><code class="sourceCode r">input_raster &lt;-<span class="st"> &quot;input/TAXNWRB_250m_ll.tif&quot;</span>
+input_gh &lt;-<span class="st"> &quot;input/SoilGrids_gh.tif&quot;</span>
+<span class="kw">tic</span>(<span class="st">&quot;Reproject to Goode Homolosine&quot;</span>)
+<span class="kw">system</span>(<span class="kw">paste0</span>(saga_cmd, <span class="st">&#39; pj_proj4 4 -CRS_PROJ4 &quot;+proj=igh +ellps=WGS84 +units=m +no_defs&quot; -SOURCE &#39;</span>, input_raster,<span class="st">&#39; -GRID &#39;</span>,input_gh,<span class="st">&#39; -RESAMPLING 0&#39;</span>))
+<span class="kw">toc</span>(<span class="dt">log =</span> <span class="ot">TRUE</span>)</code></pre>
+<p>Grid coverages are calculated per class.</p>
+<pre class="sourceCode r"><code class="sourceCode r">output_types &lt;-<span class="st"> &quot;analysis/SoilGrids_gh_.sgrd&quot;</span>
+gh_grid &lt;-<span class="st"> &quot;D:/people/Tim/grid/output/Goode_Homolosine_domain_10km.tif&quot;</span>
+<span class="kw">tic</span>(<span class="st">&quot;Grid coverage per class&quot;</span>)
+<span class="kw">system</span>(<span class="kw">paste0</span>(saga_cmd, <span class="st">&#39; grid_analysis 26 -CLASSES &quot;&#39;</span>,input_gh, <span class="st">&#39;&quot; -COVERAGES &quot;&#39;</span>,output_types,<span class="st">&#39;&quot; -TARGET_DEFINITION 1 -TARGET_TEMPLATE &quot;&#39;</span>,gh_grid,<span class="st">&#39;&quot;&#39;</span>))
+<span class="kw">toc</span>(<span class="dt">log =</span> <span class="ot">TRUE</span>)</code></pre>
+<p>Parameters are set. This includes the tag for this dataset and the different classes. A list of files is made for the coverages of all classes.</p>
+<pre class="sourceCode r"><code class="sourceCode r">type_list &lt;-<span class="st"> </span><span class="kw">list.files</span>(<span class="dt">path=</span><span class="st">&quot;analysis&quot;</span>, <span class="dt">pattern =</span> <span class="st">&quot;^.*SoilGrids_gh_*.*.sgrd$&quot;</span>, <span class="dt">full.names =</span> <span class="ot">TRUE</span>)
+dataset_tag &lt;-<span class="st"> &quot;SoilGrids&quot;</span>
+classes &lt;-<span class="st"> </span><span class="kw">data.table</span>(<span class="dt">name =</span> <span class="dv">1</span><span class="op">:</span><span class="kw">length</span>(type_list), <span class="dt">type =</span> <span class="kw">gsub</span>(<span class="st">&quot;analysis/|.sgrd&quot;</span>,<span class="st">&quot;&quot;</span>,type_list))</code></pre>
+<p>Grid values for all classes are added to one data frame.</p>
+<pre class="sourceCode r"><code class="sourceCode r"><span class="co"># Data.table to append values to</span>
+dt_total =<span class="st"> </span><span class="kw">data.table</span>()
+
+<span class="co"># Set progress bar</span>
+pb &lt;-<span class="st"> </span>progress_bar<span class="op">$</span><span class="kw">new</span>(<span class="dt">total =</span> <span class="kw">NROW</span>(classes), <span class="dt">format =</span> <span class="st">&quot;[:bar] :current/:total layers |:percent | :elapsedfull&quot;</span>, <span class="dt">width =</span> <span class="dv">60</span>)
+
+<span class="kw">tic</span>(<span class="st">&quot;Construct table with coverages&quot;</span>)
+<span class="cf">for</span> (i <span class="cf">in</span> <span class="dv">1</span><span class="op">:</span><span class="kw">NROW</span>(classes)){
+  
+  <span class="co"># Progress bar</span>
+  pb<span class="op">$</span><span class="kw">tick</span>()
+  <span class="kw">Sys.sleep</span>(<span class="dv">1</span> <span class="op">/</span><span class="st"> </span><span class="dv">100</span>)
+  
+  <span class="co"># Construct data.table with results</span>
+  type_raster &lt;-<span class="st"> </span><span class="kw">raster</span>(type_list[i])
+  type_raster[type_raster <span class="op">==</span><span class="st"> </span><span class="dv">0</span>] &lt;-<span class="st"> </span><span class="ot">NA</span>
+  type_dt &lt;-<span class="st"> </span><span class="kw">as.data.table.raster</span>(type_raster, <span class="dt">xy =</span> <span class="ot">TRUE</span>, <span class="dt">centroids =</span> <span class="ot">TRUE</span>, <span class="dt">na.rm =</span> <span class="ot">TRUE</span>)
+  <span class="kw">setnames</span>(type_dt, classes<span class="op">$</span>type[i], <span class="st">&quot;proportion&quot;</span>)
+  type_dt[,feature <span class="op">:</span><span class="er">=</span><span class="st"> </span><span class="kw">paste</span>(dataset_tag, classes<span class="op">$</span>name[i], <span class="dt">sep =</span> <span class="st">&quot;_&quot;</span>)]
+  <span class="kw">setcolorder</span>(type_dt, <span class="kw">c</span>(<span class="st">&quot;x&quot;</span>,<span class="st">&quot;y&quot;</span>,<span class="st">&quot;feature&quot;</span>,<span class="st">&quot;proportion&quot;</span>))
+  type_dt[,area_km2 <span class="op">:</span><span class="er">=</span><span class="st"> </span><span class="dv">10</span><span class="op">^</span><span class="dv">2</span> <span class="op">*</span><span class="st"> </span>proportion]
+  dt_total &lt;-<span class="st"> </span><span class="kw">bind_rows</span>(dt_total, type_dt)
+}
+<span class="kw">toc</span>(<span class="dt">log =</span> <span class="ot">TRUE</span>)</code></pre>
+<p>The correct cell ID is added to each grid value.</p>
+<pre class="sourceCode r"><code class="sourceCode r">grid_table &lt;-<span class="st"> </span><span class="kw">fread</span>(<span class="st">&quot;D:/people/Tim/grid/output/grid_table.csv&quot;</span>, <span class="dt">data.table =</span> <span class="ot">TRUE</span>)
+ID_join &lt;-<span class="st"> </span>data.table<span class="op">::</span><span class="kw">merge.data.table</span>(grid_table, dt_total, <span class="dt">by =</span> <span class="kw">c</span>(<span class="st">&quot;x&quot;</span>,<span class="st">&quot;y&quot;</span>))
+ID_join[,<span class="kw">c</span>(<span class="st">&quot;x&quot;</span>,<span class="st">&quot;y&quot;</span>) <span class="op">:</span><span class="er">=</span><span class="st"> </span><span class="ot">NULL</span>]</code></pre>
+<p>The value table is saved and elapsed time is logged.</p>
+<pre class="sourceCode r"><code class="sourceCode r"><span class="kw">fwrite</span>(ID_join, <span class="dt">file =</span> <span class="kw">paste0</span>(<span class="st">&quot;output/&quot;</span>,dataset_tag,<span class="st">&quot;_value_table.csv&quot;</span>), <span class="dt">row.names =</span> <span class="ot">FALSE</span>, <span class="dt">sep=</span><span class="st">&quot;,&quot;</span>, <span class="dt">dec =</span> <span class="st">&quot;.&quot;</span> )
+
+<span class="kw">toc</span>(<span class="dt">log =</span> <span class="ot">TRUE</span>)
+
+<span class="co"># Time elapsed</span>
+time_log &lt;-<span class="st"> </span><span class="kw">tic.log</span>(<span class="dt">format =</span> <span class="ot">TRUE</span>)</code></pre>
+
+</div>
+</div>
+            </section>
+
+          </div>
+        </div>
+      </div>
+<a href="making-goode-homolosine-grid.html" class="navigation navigation-prev " aria-label="Previous page"><i class="fa fa-angle-left"></i></a>
+<a href="aggregating-value-tables.html" class="navigation navigation-next " aria-label="Next page"><i class="fa fa-angle-right"></i></a>
+    </div>
+  </div>
+<script src="libs/gitbook-2.6.7/js/app.min.js"></script>
+<script src="libs/gitbook-2.6.7/js/lunr.js"></script>
+<script src="libs/gitbook-2.6.7/js/plugin-search.js"></script>
+<script src="libs/gitbook-2.6.7/js/plugin-sharing.js"></script>
+<script src="libs/gitbook-2.6.7/js/plugin-fontsettings.js"></script>
+<script src="libs/gitbook-2.6.7/js/plugin-bookdown.js"></script>
+<script src="libs/gitbook-2.6.7/js/jquery.highlight.js"></script>
+<script>
+gitbook.require(["gitbook"], function(gitbook) {
+gitbook.start({
+"sharing": {
+"github": false,
+"facebook": true,
+"twitter": true,
+"google": false,
+"linkedin": false,
+"weibo": false,
+"instapaper": false,
+"vk": false,
+"all": ["facebook", "google", "twitter", "linkedin", "weibo", "instapaper"]
+},
+"fontsettings": {
+"theme": "white",
+"family": "sans",
+"size": 2
+},
+"edit": {
+"link": null,
+"text": null
+},
+"history": {
+"link": null,
+"text": null
+},
+"download": null,
+"toc": {
+"collapse": "subsection"
+}
+});
+});
+</script>
+
+</body>
+
+</html>

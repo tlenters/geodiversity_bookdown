@@ -1,0 +1,582 @@
+# Calculating coverages
+
+In this chapter, coverages of five different spatial layers are calculated. The grid maded in the previous chapter is used as a template. 
+
+## Global Lithological map (GLiM)
+Packages are automatically installed (if needed) and loaded from ```library```.
+```{r install1, eval=FALSE, include=TRUE}
+list.of.packages <- c("rgdal", "GSIF", "raster", "dplyr", "spdplyr", "data.table", "reshape2", "progress", "tictoc")
+new.packages <- list.of.packages[!(list.of.packages %in% installed.packages()[,"Package"])]
+if(length(new.packages)) install.packages(new.packages, dependencies = TRUE)
+if(!("dtraster" %in% installed.packages()[,"Package"])) remotes::install_github("ldemaz/dtraster")
+
+library(rgdal)
+library(GSIF)
+library(raster)
+library(dplyr)
+library(spdplyr)
+library(data.table)
+library(dtraster)
+library(reshape2)
+library(progress)
+library(tictoc)
+```
+
+A timer is set for the total calculation time and for each section seperately.
+```{r timer, eval=FALSE, include=TRUE}
+tic.clearlog()
+tic("Total time")
+```
+
+```saga_cmd``` is linked to the R console.
+```{r link1, eval=FALSE, include=TRUE}
+if(Sys.info()['sysname']=="Windows"){
+  saga_cmd = "C:/Users/11026685/Downloads/saga-7.6.3_x64/saga-7.6.3_x64/saga_cmd.exe"
+} else {
+  saga_cmd = "saga_cmd"
+}
+system(paste(saga_cmd, "-v")) #"SAGA Version: 7.6.3 (64 bit)" if succesful
+```
+
+Working directory is set.
+```{r wd1, eval=FALSE, include=TRUE}
+setwd("D:/people/Tim/global")
+```
+
+The shapefile is reprojected to Goode Homolosine.
+```{r reproject, eval=FALSE, include=TRUE}
+tic("Reproject to Goode Homolosine")
+system(paste0(saga_cmd, ' pj_proj4 2 -CRS_PROJ4 "+proj=igh +ellps=WGS84 +units=m +no_defs" -SOURCE "input/shp.shp" -TARGET "input/shp_gh.shp" -PARALLEL 1'))
+shp_gh <- readOGR(dsn = "input", layer = "shp_gh", encoding = "ESRI Shapefile")
+toc(log = TRUE)
+```
+
+Due to overlapping layers (which led to coverages higher than 100%), duplicate layers are excluded.
+```{r exclude, eval=FALSE, include=TRUE}
+shp_gh <- shp_gh %>% distinct(IDENTITY_, .keep_all = TRUE)
+```
+
+Parameters are set. This includes the tag for this dataset, the different classes and the grid.
+```{r parameters1, eval=FALSE, include=TRUE}
+dataset_tag <- "GLiM"
+classes <- levels(shp_gh$Litho)
+gh_grid <- "D:/people/Tim/grid/output/Goode_Homolosine_domain_10km.tif"
+```
+
+For each class of the shapefile, coverages are calculated per grid cell. These values are converted to a dataframe, which are added to a data frame with the values of every class.
+```{r coverage, eval=FALSE, include=TRUE}
+# Data.table to append values to
+dt_total = data.table()
+
+# Set progress bar
+pb <- progress_bar$new(total = length(classes),format = "[:bar] :current/:total layers |:percent | :elapsedfull", width = 60)
+tic("Calculate coverage per type")
+
+for (i in 1:length(classes)){
+  
+  # Progress bar
+  pb$tick()
+  Sys.sleep(1 / 100)
+  
+  # Make subset of different types
+  shp_gh_subset <- shp_gh[shp_gh$Litho == classes[i],]
+  writeOGR(shp_gh_subset, paste0("analysis/",classes[i],".gpkg"),paste0("type_",classes[i]),"GPKG", overwrite_layer = TRUE)
+  
+  # Calculate polygon coverage per grid cell
+  system(show.output.on.console = FALSE, paste0(saga_cmd, ' grid_gridding 8 -POLYGONS=\"analysis/',classes[i],'.gpkg" -AREA=\"analysis/',classes[i],'.tif" -TARGET_DEFINITION 1 -TARGET_TEMPLATE ', gh_grid))
+  
+  # Construct data.table with results
+  type_raster <- raster(paste0("analysis/",classes[i],".tif"))
+  type_dt <- as.data.table.raster(type_raster, xy = TRUE, centroids = TRUE, na.rm = TRUE)
+  setnames(type_dt, classes[i], "proportion")
+  type_dt[,proportion := proportion/100]
+  type_dt[,feature := paste(dataset_tag, classes[i], sep = "_")]
+  setcolorder(type_dt, c("x","y","feature","proportion"))
+  type_dt[,area_km2 := 10^2 * proportion]
+  dt_total <- bind_rows(dt_total, type_dt)
+}
+toc(log = TRUE)
+```
+
+The correct cell ID is added to each grid value.
+```{r merge, eval=FALSE, include=TRUE}
+grid_table <- fread("D:/people/Tim/grid/output/grid_table.csv", data.table = TRUE)
+ID_join <- data.table::merge.data.table(grid_table, dt_total, by = c("x","y"))
+ID_join[,c("x","y") := NULL]
+```
+
+The value table is saved and elapsed time is logged.
+```{r save1, eval=FALSE, include=TRUE}
+fwrite(ID_join, file = paste0("output/",dataset_tag,"_value_table.csv"), row.names = FALSE, sep=",", dec = "." )
+
+toc(log = TRUE)
+
+# Time elapsed
+time_log <- tic.log(format = TRUE)
+```
+
+## Global River Classification (GloRiC)
+Packages are automatically installed (if needed) and loaded from ```library```.
+```{r install2, eval=FALSE, include=TRUE}
+list.of.packages <- c("rgdal", "sf", "raster", "dplyr", "data.table", "progress", "tictoc")
+new.packages <- list.of.packages[!(list.of.packages %in% installed.packages()[,"Package"])]
+if(length(new.packages)) install.packages(new.packages, dependencies = TRUE)
+if(!("dtraster" %in% installed.packages()[,"Package"])) remotes::install_github("ldemaz/dtraster")
+
+library(rgdal)
+library(sf)
+library(raster)
+library(dplyr)
+library(data.table)
+library(dtraster)
+library(progress)
+library(tictoc)
+```
+
+A timer is set for the total calculation time and for each section seperately.
+```{r timer2, eval=FALSE, include=TRUE}
+tic.clearlog()
+tic("Total time")
+```
+
+```saga_cmd``` is linked to the R console.
+```{r link2, eval=FALSE, include=TRUE}
+if(Sys.info()['sysname']=="Windows"){
+  saga_cmd = "C:/Users/11026685/Downloads/saga-7.6.3_x64/saga-7.6.3_x64/saga_cmd.exe"
+} else {
+  saga_cmd = "saga_cmd"
+}
+system(paste(saga_cmd, "-v")) #"SAGA Version: 7.6.3 (64 bit)" if succesful
+```
+
+Working directory is set.
+```{r wd2, eval=FALSE, include=TRUE}
+setwd("D:/people/Tim/global")
+```
+
+The required field is selected (Reach_type)
+```{r field2, eval=FALSE, include=TRUE}
+input_shp <- "input/GloRiC_v10.shp"
+input_shp_del <- "input/GloRiC_v10_del.shp"
+system(paste0(saga_cmd, ' table_tools 11 -TABLE "',input_shp,'" -OUT_SHAPES "',input_shp_del,'" -FIELDS 0,1,2,3,4,5,6,7,8,9,10,11,12,14'))
+```
+
+The shapefile is reprojected to Goode Homolosine.
+```{r reproject2, eval=FALSE, include=TRUE}
+input_shp_gh <- "input/GloRiC_v10_gh.shp"
+tic("Reproject to Goode Homolosine")
+system(paste0(saga_cmd, ' pj_proj4 2 -CRS_PROJ4 "+proj=igh +ellps=WGS84 +units=m +no_defs" -SOURCE "',input_shp_del,'" -TARGET "',input_shp_gh,'" -PARALLEL 1'))
+toc(log = TRUE)
+```
+
+"0" values are deleted (water).
+```{r zero2, eval=FALSE, include=TRUE}
+shp_gh <- read_sf(input_shp_gh)
+shp_gh <- dplyr::filter(shp_gh, Reach_type != 0)
+shp_gh$Reach_type <- as.numeric(shp_gh$Reach_type) 
+shp_gh <- write_sf(shp_gh, input_shp_gh)
+```
+
+Because the shapefile only contains Polylines, it is converted to a raster.
+```{r rasterize2, eval=FALSE, include=TRUE}
+input_raster <- "input/GloRiC_v10_gh_raster.tif"
+tic("Rasterize shapefile")
+system(paste0(saga_cmd, ' grid_gridding 0 -INPUT "',input_shp_gh,'" -GRID "',input_raster,'" -FIELD "Reach_type" -TARGET_USER_SIZE 1000'))
+toc(log = TRUE)
+```
+
+Grid coverages are calculated per class.
+```{r coverage2, eval=FALSE, include=TRUE}
+output_types <- "analysis/GloRiC_v10_gh_.sgrd"
+gh_grid <- "D:/people/Tim/grid/output/Goode_Homolosine_domain_10km.tif"
+tic("Grid coverage per class")
+system(paste0(saga_cmd, ' grid_analysis 26 -CLASSES "',input_raster, '" -COVERAGES "',output_types,'" -TARGET_DEFINITION 1 -TARGET_TEMPLATE "',gh_grid,'"'))
+toc(log = TRUE)
+```
+
+Parameters are set. This includes the tag for this dataset and the different classes. A list of files is made for the coverages of all classes.
+```{r parameters2, eval=FALSE, include=TRUE}
+type_list <- list.files(path="analysis", pattern = "^.*GloRiC_v10_gh_*.*.sgrd$", full.names = TRUE)
+dataset_tag <- "GloRiC"
+classes <- data.table(name = sort(unique(shp_gh$Reach_type)), type = gsub("analysis/|.sgrd","",type_list))
+```
+
+Grid values for all classes are added to one data frame.
+```{r table2, eval=FALSE, include=TRUE}
+# Data.table to append values to
+dt_total = data.table()
+
+# Set progress bar
+pb <- progress_bar$new(total = NROW(classes), format = "[:bar] :current/:total layers |:percent | :elapsedfull", width = 60)
+
+tic("Construct table with coverages")
+for (i in 1:NROW(classes)){
+  
+  # Progress bar
+  pb$tick()
+  Sys.sleep(1 / 100)
+  
+  # Construct data.table with results
+  type_raster <- raster(type_list[i])
+  type_raster[type_raster == 0] <- NA
+  type_dt <- as.data.table.raster(type_raster, xy = TRUE, centroids = TRUE, na.rm = TRUE)
+  setnames(type_dt, classes$type[i], "proportion")
+  type_dt[,feature := paste(dataset_tag, classes$name[i], sep = "_")]
+  setcolorder(type_dt, c("x","y","feature","proportion"))
+  type_dt[,area_km2 := 10^2 * proportion]
+  dt_total <- bind_rows(dt_total, type_dt)
+}
+toc(log = TRUE)
+```
+
+The correct cell ID is added to each grid value.
+```{r merge2, eval=FALSE, include=TRUE}
+grid_table <- fread("D:/people/Tim/grid/output/grid_table.csv", data.table = TRUE)
+ID_join <- data.table::merge.data.table(grid_table, dt_total, by = c("x","y"))
+ID_join[,c("x","y") := NULL]
+```
+
+The value table is saved and elapsed time is logged.
+```{r save2, eval=FALSE, include=TRUE}
+fwrite(ID_join, file = paste0("output/",dataset_tag,"_value_table.csv"), row.names = FALSE, sep=",", dec = "." )
+
+toc(log = TRUE)
+
+# Time elapsed
+time_log <- tic.log(format = TRUE)
+```
+
+## Global Lakes and Wetlands Database (GLWD)
+Packages are automatically installed (if needed) and loaded from ```library```.
+```{r install3, eval=FALSE, include=TRUE}
+list.of.packages <- c("rgdal", "sf", "raster", "dplyr", "data.table", "progress", "tictoc")
+new.packages <- list.of.packages[!(list.of.packages %in% installed.packages()[,"Package"])]
+if(length(new.packages)) install.packages(new.packages, dependencies = TRUE)
+if(!("dtraster" %in% installed.packages()[,"Package"])) remotes::install_github("ldemaz/dtraster")
+
+library(rgdal)
+library(sf)
+library(raster)
+library(dplyr)
+library(data.table)
+library(dtraster)
+library(progress)
+library(tictoc)
+```
+
+A timer is set for the total calculation time and for each section seperately.
+```{r timer3, eval=FALSE, include=TRUE}
+tic.clearlog()
+tic("Total time")
+```
+
+```saga_cmd``` is linked to the R console.
+```{r link3, eval=FALSE, include=TRUE}
+if(Sys.info()['sysname']=="Windows"){
+  saga_cmd = "C:/Users/11026685/Downloads/saga-7.6.3_x64/saga-7.6.3_x64/saga_cmd.exe"
+} else {
+  saga_cmd = "saga_cmd"
+}
+system(paste(saga_cmd, "-v")) #"SAGA Version: 7.6.3 (64 bit)" if succesful
+```
+
+Working directory is set.
+```{r wd3, eval=FALSE, include=TRUE}
+setwd("D:/people/Tim/global")
+```
+
+The raster is reprojected to Goode Homolosine
+```{r reproject3, eval=FALSE, include=TRUE}
+input_raster <- "input/glwd_3.tif"
+input_gh <- "input/glwd_3_gh.tif"
+tic("Reproject to Goode Homolosine")
+system(paste0(saga_cmd, ' pj_proj4 4 -CRS_PROJ4 "+proj=igh +ellps=WGS84 +units=m +no_defs" -SOURCE ', input_raster,' -GRID ',input_gh,' -RESAMPLING 0'))
+toc(log = TRUE)
+```
+
+Grid coverages are calculated per class.
+```{r coverage3, eval=FALSE, include=TRUE}
+output_types <- "analysis/glwd_3_gh_.sgrd"
+gh_grid <- "D:/people/Tim/grid/output/Goode_Homolosine_domain_10km.tif"
+tic("Grid coverage per class")
+system(paste0(saga_cmd, ' grid_analysis 26 -CLASSES "',input_gh, '" -COVERAGES "',output_types,'" -TARGET_DEFINITION 1 -TARGET_TEMPLATE "',gh_grid,'"'))
+toc(log = TRUE)
+```
+
+Parameters are set. This includes the tag for this dataset and the different classes. A list of files is made for the coverages of all classes.
+```{r parameters3, eval=FALSE, include=TRUE}
+type_list <- list.files(path="analysis", pattern = "^.*glwd_3_gh_*.*.sgrd$", full.names = TRUE)
+dataset_tag <- "GLWD"
+classes <- data.table(name = sort(unique(shp_gh$Reach_type)), type = gsub("analysis/|.sgrd","",type_list))
+```
+
+Grid values for all classes are added to one data frame.
+```{r table3, eval=FALSE, include=TRUE}
+# Data.table to append values to
+dt_total = data.table()
+
+# Set progress bar
+pb <- progress_bar$new(total = NROW(classes), format = "[:bar] :current/:total layers |:percent | :elapsedfull", width = 60)
+
+tic("Construct table with coverages")
+for (i in 1:NROW(classes)){
+  
+  # Progress bar
+  pb$tick()
+  Sys.sleep(1 / 100)
+  
+  # Construct data.table with results
+  type_raster <- raster(type_list[i])
+  type_raster[type_raster == 0] <- NA
+  type_dt <- as.data.table.raster(type_raster, xy = TRUE, centroids = TRUE, na.rm = TRUE)
+  setnames(type_dt, classes$type[i], "proportion")
+  type_dt[,feature := paste(dataset_tag, classes$name[i], sep = "_")]
+  setcolorder(type_dt, c("x","y","feature","proportion"))
+  type_dt[,area_km2 := 10^2 * proportion]
+  dt_total <- bind_rows(dt_total, type_dt)
+}
+toc(log = TRUE)
+```
+
+The correct cell ID is added to each grid value.
+```{r merge3, eval=FALSE, include=TRUE}
+grid_table <- fread("D:/people/Tim/grid/output/grid_table.csv", data.table = TRUE)
+ID_join <- data.table::merge.data.table(grid_table, dt_total, by = c("x","y"))
+ID_join[,c("x","y") := NULL]
+```
+
+The value table is saved and elapsed time is logged.
+```{r save3, eval=FALSE, include=TRUE}
+fwrite(ID_join, file = paste0("output/",dataset_tag,"_value_table.csv"), row.names = FALSE, sep=",", dec = "." )
+
+toc(log = TRUE)
+
+# Time elapsed
+time_log <- tic.log(format = TRUE)
+```
+
+## Global terrain classification (Iwahashi et al., 2018)
+Packages are automatically installed (if needed) and loaded from ```library```.
+```{r install4, eval=FALSE, include=TRUE}
+list.of.packages <- c("rgdal", "sf", "raster", "dplyr", "data.table", "progress", "tictoc")
+new.packages <- list.of.packages[!(list.of.packages %in% installed.packages()[,"Package"])]
+if(length(new.packages)) install.packages(new.packages, dependencies = TRUE)
+if(!("dtraster" %in% installed.packages()[,"Package"])) remotes::install_github("ldemaz/dtraster")
+
+library(rgdal)
+library(sf)
+library(raster)
+library(dplyr)
+library(data.table)
+library(dtraster)
+library(progress)
+library(tictoc)
+```
+
+A timer is set for the total calculation time and for each section seperately.
+```{r timer4, eval=FALSE, include=TRUE}
+tic.clearlog()
+tic("Total time")
+```
+
+```saga_cmd``` is linked to the R console.
+```{r link4, eval=FALSE, include=TRUE}
+if(Sys.info()['sysname']=="Windows"){
+  saga_cmd = "C:/Users/11026685/Downloads/saga-7.6.3_x64/saga-7.6.3_x64/saga_cmd.exe"
+} else {
+  saga_cmd = "saga_cmd"
+}
+system(paste(saga_cmd, "-v")) #"SAGA Version: 7.6.3 (64 bit)" if succesful
+```
+
+Working directory is set.
+```{r wd4, eval=FALSE, include=TRUE}
+setwd("D:/people/Tim/global")
+```
+Water is set as no-data value.
+```{r nodata4, eval=FALSE, include=TRUE}
+full_raster <- "input/GlobalTerrainClassification_Iwahashi_etal_2018.tif"
+crop_raster <- "input/Iwahashi.tif"
+tic("Set water (0) as no-data")
+system(paste0(saga_cmd, ' grid_tools 15 -INPUT ',full_raster,' -RESULT ',crop_raster,' -NEW 0 -RESULT_NODATA_CHOICE 1 -RESULT_NODATA_VALUE 0'))
+toc(log = TRUE)
+```
+
+The raster is reprojected to Goode Homolosine
+```{r reproject4, eval=FALSE, include=TRUE}
+input_raster <- "input/Iwahashi.tif"
+input_gh <- "input/Iwahashi_gh.tif"
+tic("Reproject to Goode Homolosine")
+system(paste0(saga_cmd, ' pj_proj4 4 -CRS_PROJ4 "+proj=igh +ellps=WGS84 +units=m +no_defs" -SOURCE ', input_raster,' -GRID ',input_gh,' -RESAMPLING 0'))
+toc(log = TRUE)
+```
+
+Grid coverages are calculated per class.
+```{r coverage4, eval=FALSE, include=TRUE}
+output_types <- "analysis/Iwahashi_gh_.sgrd"
+gh_grid <- "D:/people/Tim/grid/output/Goode_Homolosine_domain_10km.tif"
+tic("Grid coverage per class")
+system(paste0(saga_cmd, ' grid_analysis 26 -CLASSES "',input_gh, '" -COVERAGES "',output_types,'" -TARGET_DEFINITION 1 -TARGET_TEMPLATE "',gh_grid,'"'))
+toc(log = TRUE)
+```
+
+Parameters are set. This includes the tag for this dataset and the different classes. A list of files is made for the coverages of all classes.
+```{r parameters4, eval=FALSE, include=TRUE}
+type_list <- list.files(path="analysis", pattern = "^.*Iwahashi_gh_*.*.sgrd$", full.names = TRUE)
+dataset_tag <- "Iwahashi"
+classes <- data.table(name = 1:length(type_list), type = gsub("analysis/|.sgrd","",type_list))
+```
+
+Grid values for all classes are added to one data frame.
+```{r table4, eval=FALSE, include=TRUE}
+# Data.table to append values to
+dt_total = data.table()
+
+# Set progress bar
+pb <- progress_bar$new(total = NROW(classes), format = "[:bar] :current/:total layers |:percent | :elapsedfull", width = 60)
+
+tic("Construct table with coverages")
+for (i in 1:NROW(classes)){
+  
+  # Progress bar
+  pb$tick()
+  Sys.sleep(1 / 100)
+  
+  # Construct data.table with results
+  type_raster <- raster(type_list[i])
+  type_raster[type_raster == 0] <- NA
+  type_dt <- as.data.table.raster(type_raster, xy = TRUE, centroids = TRUE, na.rm = TRUE)
+  setnames(type_dt, classes$type[i], "proportion")
+  type_dt[,feature := paste(dataset_tag, classes$name[i], sep = "_")]
+  setcolorder(type_dt, c("x","y","feature","proportion"))
+  type_dt[,area_km2 := 10^2 * proportion]
+  dt_total <- bind_rows(dt_total, type_dt)
+}
+toc(log = TRUE)
+```
+
+The correct cell ID is added to each grid value.
+```{r merge4, eval=FALSE, include=TRUE}
+grid_table <- fread("D:/people/Tim/grid/output/grid_table.csv", data.table = TRUE)
+ID_join <- data.table::merge.data.table(grid_table, dt_total, by = c("x","y"))
+ID_join[,c("x","y") := NULL]
+```
+
+The value table is saved and elapsed time is logged.
+```{r save4, eval=FALSE, include=TRUE}
+fwrite(ID_join, file = paste0("output/",dataset_tag,"_value_table.csv"), row.names = FALSE, sep=",", dec = "." )
+
+toc(log = TRUE)
+
+# Time elapsed
+time_log <- tic.log(format = TRUE)
+```
+
+## World Reference Base Soil Groups (SoilGrids)
+Packages are automatically installed (if needed) and loaded from ```library```.
+```{r install5, eval=FALSE, include=TRUE}
+list.of.packages <- c("rgdal", "sf", "raster", "dplyr", "data.table", "progress", "tictoc")
+new.packages <- list.of.packages[!(list.of.packages %in% installed.packages()[,"Package"])]
+if(length(new.packages)) install.packages(new.packages, dependencies = TRUE)
+if(!("dtraster" %in% installed.packages()[,"Package"])) remotes::install_github("ldemaz/dtraster")
+
+library(rgdal)
+library(sf)
+library(raster)
+library(dplyr)
+library(data.table)
+library(dtraster)
+library(progress)
+library(tictoc)
+```
+
+A timer is set for the total calculation time and for each section seperately.
+```{r timer5, eval=FALSE, include=TRUE}
+tic.clearlog()
+tic("Total time")
+```
+
+```saga_cmd``` is linked to the R console.
+```{r link5, eval=FALSE, include=TRUE}
+if(Sys.info()['sysname']=="Windows"){
+  saga_cmd = "C:/Users/11026685/Downloads/saga-7.6.3_x64/saga-7.6.3_x64/saga_cmd.exe"
+} else {
+  saga_cmd = "saga_cmd"
+}
+system(paste(saga_cmd, "-v")) #"SAGA Version: 7.6.3 (64 bit)" if succesful
+```
+
+Working directory is set.
+```{r wd5, eval=FALSE, include=TRUE}
+setwd("D:/people/Tim/global")
+```
+
+The raster is reprojected to Goode Homolosine
+```{r reproject5, eval=FALSE, include=TRUE}
+input_raster <- "input/TAXNWRB_250m_ll.tif"
+input_gh <- "input/SoilGrids_gh.tif"
+tic("Reproject to Goode Homolosine")
+system(paste0(saga_cmd, ' pj_proj4 4 -CRS_PROJ4 "+proj=igh +ellps=WGS84 +units=m +no_defs" -SOURCE ', input_raster,' -GRID ',input_gh,' -RESAMPLING 0'))
+toc(log = TRUE)
+```
+
+Grid coverages are calculated per class.
+```{r coverage5, eval=FALSE, include=TRUE}
+output_types <- "analysis/SoilGrids_gh_.sgrd"
+gh_grid <- "D:/people/Tim/grid/output/Goode_Homolosine_domain_10km.tif"
+tic("Grid coverage per class")
+system(paste0(saga_cmd, ' grid_analysis 26 -CLASSES "',input_gh, '" -COVERAGES "',output_types,'" -TARGET_DEFINITION 1 -TARGET_TEMPLATE "',gh_grid,'"'))
+toc(log = TRUE)
+```
+
+Parameters are set. This includes the tag for this dataset and the different classes. A list of files is made for the coverages of all classes.
+```{r parameters5, eval=FALSE, include=TRUE}
+type_list <- list.files(path="analysis", pattern = "^.*SoilGrids_gh_*.*.sgrd$", full.names = TRUE)
+dataset_tag <- "SoilGrids"
+classes <- data.table(name = 1:length(type_list), type = gsub("analysis/|.sgrd","",type_list))
+```
+
+Grid values for all classes are added to one data frame.
+```{r table5, eval=FALSE, include=TRUE}
+# Data.table to append values to
+dt_total = data.table()
+
+# Set progress bar
+pb <- progress_bar$new(total = NROW(classes), format = "[:bar] :current/:total layers |:percent | :elapsedfull", width = 60)
+
+tic("Construct table with coverages")
+for (i in 1:NROW(classes)){
+  
+  # Progress bar
+  pb$tick()
+  Sys.sleep(1 / 100)
+  
+  # Construct data.table with results
+  type_raster <- raster(type_list[i])
+  type_raster[type_raster == 0] <- NA
+  type_dt <- as.data.table.raster(type_raster, xy = TRUE, centroids = TRUE, na.rm = TRUE)
+  setnames(type_dt, classes$type[i], "proportion")
+  type_dt[,feature := paste(dataset_tag, classes$name[i], sep = "_")]
+  setcolorder(type_dt, c("x","y","feature","proportion"))
+  type_dt[,area_km2 := 10^2 * proportion]
+  dt_total <- bind_rows(dt_total, type_dt)
+}
+toc(log = TRUE)
+```
+
+The correct cell ID is added to each grid value.
+```{r merge5, eval=FALSE, include=TRUE}
+grid_table <- fread("D:/people/Tim/grid/output/grid_table.csv", data.table = TRUE)
+ID_join <- data.table::merge.data.table(grid_table, dt_total, by = c("x","y"))
+ID_join[,c("x","y") := NULL]
+```
+
+The value table is saved and elapsed time is logged.
+```{r save5, eval=FALSE, include=TRUE}
+fwrite(ID_join, file = paste0("output/",dataset_tag,"_value_table.csv"), row.names = FALSE, sep=",", dec = "." )
+
+toc(log = TRUE)
+
+# Time elapsed
+time_log <- tic.log(format = TRUE)
+```
